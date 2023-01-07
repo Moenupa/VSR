@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 from skimage.metrics import structural_similarity
 import os
 import math
+from types import FunctionType as function
+import numpy as np
 
 class IO():
     get_subdirs = lambda dir: [d.path for d in os.scandir(dir) if d.is_dir()]
@@ -14,7 +16,7 @@ class IO():
 
 class Metrics():
     @staticmethod
-    def apply_pairwise(values, func):
+    def apply_pairwise(values, func: function):
         """
         Applies a function to a list of values in a pairwise manner.
         
@@ -44,10 +46,10 @@ class Metrics():
         return f'test addition pairwise on {ls} -> {list(res)}'
     
     @staticmethod
-    def psnr(img1, img2):
+    def psnr(img1: np.ndarray, img2: np.ndarray):
         return cv2.PSNR(img1, img2)
     @staticmethod
-    def ssim(img1, img2):
+    def ssim(img1: np.ndarray, img2: np.ndarray):
         return structural_similarity(img1, img2, multichannel=True)
 
 class Curve():
@@ -67,7 +69,7 @@ class Curve():
         'ssim': (0, 100),
     }
     
-    def __init__(self, clip_dir, metric=Metrics.psnr, dry_run=False):
+    def __init__(self, clip_dir:str, metric:function=Metrics.psnr, dry_run:bool=False):
         assert os.path.exists(clip_dir), f'Clip directory {clip_dir} does not exist'
         assert os.path.isdir(clip_dir), f'Clip directory {clip_dir} is not a directory'
         assert IO.contain_frames(clip_dir), f'Clip directory {clip_dir} does not contain frames'
@@ -76,38 +78,42 @@ class Curve():
         self.metric = metric
         os.makedirs(f'./res/{self.metric.__name__}', exist_ok=True)
         if dry_run:
-            print(f'Dry run for clip {self.clip_dir}')
+            print(f'\tDry run for clip {self.clip_dir}')
             self.curve = [30 for i in range(99)]
         else:
             self.curve = self.gen_curve()
         
     def gen_curve(self):
+        '''
+        Generates the metric curve for the clip.
+        
+        Returns:
+        a list of metric values for the curve
+        '''
         frames = IO.get_frames(self.clip_dir)
         return list(Metrics.apply_pairwise(frames, self.metric))
         
-    def plot(self, save=False, save_name=None):
+    def plot(self, save:bool=False, save_name:str="curve"):
         plt.plot(list(range(len(self.curve))), self.curve)
-        plt.ylim(bottom=0)
-        if self.metric.__name__ in self.ylim:
-            plt.ylim(self.ylim[self.metric.__name__])
-        if self.metric.__name__ in self.xlim:
-            plt.xlim(self.xlim[self.metric.__name__])
+        plt.xlim(self.xlim.get(self.metric.__name__, None))
+        plt.ylim(self.ylim.get(self.metric.__name__, (0, None)))
         if save:
             plt.savefig(f'./res/{self.metric.__name__}/{save_name}.png')
         else:
-            plt.title(f'{self.metric.__name__} curve for clip {self.clip_dir}')
+            plt.title(f'{self.metric.__name__.upper()} curve for clip {self.clip_dir}')
             plt.show()
         plt.clf()
 
 def test_dry_run():
-    curve = Curve('./output/edvr/000/', dry_run=True)
+    curve = Curve('./output/train/000/', dry_run=True)
     curve.plot()
 
-def automation(dir, metric, clips_per_subdir=math.inf, depth=1, dry_run=False, save=True):
+def automation(dir:str, metric:function, clips_per_subdir=math.inf, depth:int=1, dry_run:bool=False, save:bool=True) -> None:
     '''
     Automates the process of generating and plotting curves for 
     specified number of clips in one folder.
     
+    Args:
     @metric: metric used to generate the curve
     @clips_per_subdir: number of clips to plot in each subdirectory
     @depth: depth of subdirectories to go into
@@ -117,7 +123,7 @@ def automation(dir, metric, clips_per_subdir=math.inf, depth=1, dry_run=False, s
     if depth > 1:
         for subdir in IO.get_subdirs(dir):
             if dry_run:
-                print(f'Dry run for subdirectory {subdir}')
+                print(f'Subdir {subdir}')
             automation(subdir, metric, clips_per_subdir, depth-1, dry_run, save)
     else:
         clips = IO.get_subdirs(dir)
@@ -140,5 +146,5 @@ if __name__ == '__main__':
         'save': False,
     }
     
-    # automation(**configs)
+    automation(**configs)
     
