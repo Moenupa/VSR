@@ -9,7 +9,7 @@ from typing import Callable
 CHAR_POOL = string.ascii_lowercase + string.digits
 
 
-def random_str(length: int = 6, conflicts: list[str] = []):
+def random_str(length: int = 6, conflicts: list = []):
     while ret := ''.join(random.choice(CHAR_POOL) for _ in range(length)):
         if ret not in conflicts:
             break

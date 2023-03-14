@@ -1,6 +1,7 @@
 import tensorflow as tf
 import glob
 import json
+from src.config import random_str, Config
 
 
 def peek(raw_record):
@@ -41,8 +42,9 @@ def save_dict(d: dict, path: str) -> None:
 
 
 if __name__ == '__main__':
+    config = Config(stdout=False, dry_run=False)
     raw_ds = tf.data.TFRecordDataset(glob.glob("data/video/*.tfrecord"))
     parsed_ds = raw_ds.map(extract_fn)
 
     video_label_pairs = extract_to_dict(parsed_ds)
-    save_dict(video_label_pairs, "./res/tags.json")
+    config.save_fp(lambda fp, obj: json.dump(obj, fp), 'labels.json', video_label_pairs)
