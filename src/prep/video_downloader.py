@@ -15,10 +15,12 @@ def translate_video_id(fake_id: str) -> str:
     with urllib.request.urlopen(
             f'http://data.yt8m.org/2/j/i/{fake_id[:2]}/{fake_id}.js') as url:
         if url.getcode() != 200:
-            raise ConnectionError(f'translating {fake_id}: {url.getcode()} != 200')
+            raise ConnectionError(
+                f'translating {fake_id}: {url.getcode()} != 200')
         t = eval(url.read().decode('utf-8')[1:-1])
         if t[0] != fake_id:
-            raise ConnectionError(f'translating {fake_id}: {t[0]} != {fake_id}')
+            raise ConnectionError(
+                f'translating {fake_id}: {t[0]} != {fake_id}')
         return t[1]
 
 
@@ -26,7 +28,9 @@ def get_yt_url(youtube_id: str) -> str:
     return f'http://youtube.com/watch?v={youtube_id}'
 
 
-def download_video(vid: str, download_path: str = f'./out/ytb/{config.exp_code}') -> bool:
+def download_video(vid: str,
+                   download_path: str = f'./out/ytb/{config.exp_code}'
+                   ) -> bool:
     os.makedirs(download_path, exist_ok=True)
 
     url = get_yt_url(vid)

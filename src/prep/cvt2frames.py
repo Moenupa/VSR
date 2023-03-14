@@ -5,6 +5,7 @@ from src.config import Config
 
 config = Config()
 
+
 def video2frames(video_path: str,
                  lq_base: str,
                  gt_base: str,
