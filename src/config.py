@@ -1,3 +1,4 @@
+import glob
 import logging
 import sys
 import os
@@ -37,14 +38,15 @@ class Config():
                     verbose: bool = True,
                     prompt: str = 'log setup OK -> logger:'):
         os.makedirs(log_dir, exist_ok=True)
-        log_path = os.path.join(log_dir, f'{log_name}.log')
+        log_path = f'{log_dir}/{log_name}.log'
         logging.basicConfig(filename=log_path,
                             level=Config.DEFAULT_LEVEL,
                             format=Config.DEFAULT_LOG_FORMAT,
                             datefmt=Config.DEFAULT_TIME_FORMAT)
         if verbose:
-            print(f'{os.path.abspath(log_path)}')
-            logging.info(f'{prompt} {os.path.abspath(log_path)}')
+            log_abspath = glob.glob(os.path.abspath(log_path))
+            print(log_abspath)
+            logging.info(f'{prompt} {log_abspath}')
 
     def __set(self, stdout: bool, dry_run: bool, prompt: str):
         if stdout:
@@ -59,10 +61,9 @@ class Config():
 
     def __init__(self, stdout: bool, dry_run=False, verbose=True) -> None:
         self.verbose = verbose
-        log_base = os.path.join(
-            os.path.join(Config.LOG_ROOT, f'{date.today()}'))
+        log_base = f'{Config.LOG_ROOT}/{date.today()}'
         while code := random_str():
-            log_dir = os.path.join(log_base, code)
+            log_dir = f'{log_base}/{code}'
             if not os.path.exists(log_dir):
                 break
 
@@ -75,8 +76,12 @@ class Config():
         self.__set(stdout, dry_run, 'reset complete')
 
     def save(self, fn: Callable, *args, **kwargs) -> None:
+        if self.dry_run:
+            return
         fn(self.log_dir, *args, **kwargs)
 
     def save_fp(self, fn: Callable, filename: str, *args, **kwargs) -> None:
+        if self.dry_run:
+            return
         with open(os.path.join(self.log_dir, filename), 'w') as fp:
             fn(fp, *args, **kwargs)

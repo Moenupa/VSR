@@ -15,10 +15,10 @@ def translate_video_id(fake_id: str) -> str:
     with urllib.request.urlopen(
             f'http://data.yt8m.org/2/j/i/{fake_id[:2]}/{fake_id}.js') as url:
         if url.getcode() != 200:
-            raise Exception(f'translating {fake_id}: {url.getcode()} != 200')
+            raise ConnectionError(f'translating {fake_id}: {url.getcode()} != 200')
         t = eval(url.read().decode('utf-8')[1:-1])
         if t[0] != fake_id:
-            raise Exception(f'translating {fake_id}: {t[0]} != {fake_id}')
+            raise ConnectionError(f'translating {fake_id}: {t[0]} != {fake_id}')
         return t[1]
 
 
@@ -28,11 +28,8 @@ def get_yt_url(youtube_id: str) -> str:
 
 def download_video(vid: str, download_path: str = f'./out/ytb/{config.exp_code}') -> bool:
     os.makedirs(download_path, exist_ok=True)
-    try:
-        url = get_yt_url(vid)
-    except Exception as e:
-        logging.error(f"[{vid}] fails: {e}")
-        return False
+
+    url = get_yt_url(vid)
     all_streams = YouTube(url).streams.filter(mime_type="video/mp4",
                                               res="720p",
                                               only_video=True)
@@ -60,10 +57,14 @@ def download_batch(fake_ids: dict, batch_size: int = 10) -> tuple:
     logging.info(f"batch size={batch_size:03d} {batch}")
     downloaded, failed = {}, []
     for fake_id, labels in batch:
-        vid = translate_video_id(fake_id)
-        if download_video(vid):
-            downloaded[vid] = labels
-        else:
+        try:
+            vid = translate_video_id(fake_id)
+            if download_video(vid):
+                downloaded[vid] = labels
+            else:
+                failed.append(fake_id)
+        except Exception as e:
+            logging.error(f'download error: {e}')
             failed.append(fake_id)
     return downloaded, failed
 
@@ -80,7 +81,7 @@ if __name__ == '__main__':
             chunk, _ = download_batch(fake_ids, batch_size)
             all_downloads = {**chunk, **all_downloads}
         except Exception as e:
-            logging.error(f'download error \n{e}')
+            logging.error(f'unknown error: {e}')
         finally:
             config.save_fp(lambda fp, obj: json.dump(obj, fp),
                            'downloaded.json',
