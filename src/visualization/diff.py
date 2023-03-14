@@ -16,8 +16,10 @@ root_dirs = [
 rows = ['GT', 'LQ', 'BasicVSR', 'EDVR']
 cols = ['img', 'feature1', 'feature2', 'feature3']
 
+
 def find_paths(cat, idx):
     return list(f'{root_dir}/{cat}/{idx}.png' for root_dir in root_dirs)
+
 
 def image_reshape(path, width=1280, height=720, feature=()):
     img = Image.open(path).convert('RGB')
@@ -28,11 +30,15 @@ def image_reshape(path, width=1280, height=720, feature=()):
     img = np.asarray(img)
     return img
 
+
 def show_diff(paths):
     imgs = list(map(image_reshape, paths))
-    imgs += list(image_reshape(path, feature=(200, 400, 400, 600)) for path in paths)
-    imgs += list(image_reshape(path, feature=(1000, 500, 1200, 700)) for path in paths)
-    imgs += list(image_reshape(path, feature=(688, 400, 800, 600)) for path in paths)
+    imgs += list(
+        image_reshape(path, feature=(200, 400, 400, 600)) for path in paths)
+    imgs += list(
+        image_reshape(path, feature=(1000, 500, 1200, 700)) for path in paths)
+    imgs += list(
+        image_reshape(path, feature=(688, 400, 800, 600)) for path in paths)
 
     fig = plt.figure(figsize=(16., 14.))
     grid = ImageGrid(
@@ -55,12 +61,14 @@ def show_diff(paths):
     fig.tight_layout()
     plt.savefig(f"./res/diff/{int(time.time())}.png")
 
+
 def compare_metrics(paths):
-    imgs = list(cv2.resize(cv2.imread(path), (1280,720)) for path in paths)
+    imgs = list(cv2.resize(cv2.imread(path), (1280, 720)) for path in paths)
     for i in range(1, len(imgs)):
         psnr = peak_signal_noise_ratio(imgs[0], imgs[i])
         ssim = structural_similarity(imgs[0], imgs[i], channel_axis=2)
         print(f'Metrics for {rows[i]} --- PSNR: {psnr}, SSIM: {ssim}')
+
 
 if __name__ == "__main__":
     idx = 99

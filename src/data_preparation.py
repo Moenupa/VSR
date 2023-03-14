@@ -14,7 +14,8 @@ config = Config(stdout=False, dry_run=False)
 
 def translate_video_id(fake_id: str) -> str:
     """Get the YouTube-format video ID from 4-character fake-id."""
-    with urllib.request.urlopen(f'http://data.yt8m.org/2/j/i/{fake_id[:2]}/{fake_id}.js') as url:
+    with urllib.request.urlopen(
+            f'http://data.yt8m.org/2/j/i/{fake_id[:2]}/{fake_id}.js') as url:
         if url.getcode() != 200:
             raise Exception(f'translating {fake_id}: {url.getcode()} != 200')
         t = eval(url.read().decode('utf-8')[1:-1])
@@ -34,7 +35,9 @@ def download_video(vid: str, download_path: str = './out/ytb/') -> bool:
     except Exception as e:
         logging.error(f"[{url}] fails: {e}")
         return False
-    all_streams = YouTube(url).streams.filter(mime_type="video/mp4", res="720p", only_video=True)
+    all_streams = YouTube(url).streams.filter(mime_type="video/mp4",
+                                              res="720p",
+                                              only_video=True)
     if not all_streams:
         logging.warning(f"[{url}] fails: no option for 720p")
         return False
@@ -47,7 +50,11 @@ def download_video(vid: str, download_path: str = './out/ytb/') -> bool:
     return True
 
 
-def video2frames(video_path: str, lq_base: str, gt_base: str, start_idx: int = -1, n_frames: int = 100,
+def video2frames(video_path: str,
+                 lq_base: str,
+                 gt_base: str,
+                 start_idx: int = -1,
+                 n_frames: int = 100,
                  lq_size: tuple = (320, 180)):
     # get video name
     file = os.path.basename(video_path)
@@ -65,7 +72,8 @@ def video2frames(video_path: str, lq_base: str, gt_base: str, start_idx: int = -
 
     # checking dimensions and read video metadata
     if height != 720 or width != 1280:
-        logging.warning(f'|{video_path}| skipped, improper dimension: {(width, height)}')
+        logging.warning(
+            f'|{video_path}| skipped, improper dimension: {(width, height)}')
         return
     max_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     n_frames = min(n_frames, max_frames)
@@ -87,7 +95,9 @@ def video2frames(video_path: str, lq_base: str, gt_base: str, start_idx: int = -
             ret, gt = cap.read()
             count += 1
     cap.release()
-    logging.info(f"|{video_path}| to frames [{start_idx},{start_idx + count}] from [0, {max_frames}]")
+    logging.info(
+        f"|{video_path}| to frames [{start_idx},{start_idx + count}] from [0, {max_frames}]"
+    )
 
 
 def read_from_json(path: str = './res/tags.json') -> dict:
@@ -113,5 +123,7 @@ def download_batch(fake_ids: dict, batch_size: int = 10) -> tuple:
 if __name__ == '__main__':
     fake_ids = read_from_json()
     # downloaded, failed = download_batch(fake_ids, 3)
-    
-    config.save_fp(lambda fp, obj: json.dump(obj, fp), 'downloaded.json', obj=fake_ids)
+
+    config.save_fp(lambda fp, obj: json.dump(obj, fp),
+                   'downloaded.json',
+                   obj=fake_ids)

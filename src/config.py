@@ -76,7 +76,7 @@ class Config():
 
     def save(self, fn: Callable, *args, **kwargs) -> None:
         fn(self.log_dir, *args, **kwargs)
-        
+
     def save_fp(self, fn: Callable, filename: str, *args, **kwargs) -> None:
         with open(os.path.join(self.log_dir, filename), 'w') as fp:
             fn(fp, *args, **kwargs)
