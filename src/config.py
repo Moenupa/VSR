@@ -44,8 +44,8 @@ class Config():
                             format=Config.DEFAULT_LOG_FORMAT,
                             datefmt=Config.DEFAULT_TIME_FORMAT)
         if verbose:
-            log_abspath = glob.glob(os.path.abspath(log_path))
-            print(log_abspath)
+            log_abspath = os.path.abspath(log_path).replace('\\', '/')
+            print(f'file:///{log_abspath}')
             logging.info(f'{prompt} {log_abspath}')
 
     def __set(self, stdout: bool, dry_run: bool, prompt: str):
@@ -59,16 +59,18 @@ class Config():
         if self.verbose:
             logging.info(f'{prompt} [stdout={stdout}], [dry_run={dry_run}]')
 
-    def __init__(self, stdout: bool, dry_run=False, verbose=True) -> None:
+    def __init__(self, stdout: bool, dry_run=False, verbose=True, exp_code: str = None) -> None:
         self.verbose = verbose
         log_base = f'{Config.LOG_ROOT}/{date.today()}'
-        while code := random_str():
-            log_dir = f'{log_base}/{code}'
-            if not os.path.exists(log_dir):
-                break
+        if exp_code is None:
+            while code := random_str():
+                if not os.path.exists(f'{log_base}/{code}'):
+                    break
+        else:
+            code = exp_code
 
         self.exp_code = code
-        self.log_dir = log_dir
+        self.log_dir = f'{log_base}/{code}'
         self.log_name = code
         self.__set(stdout, dry_run, f'experiment "{code}"')
 
