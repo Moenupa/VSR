@@ -59,7 +59,11 @@ class Config():
         if self.verbose:
             logging.info(f'{prompt} [stdout={stdout}], [dry_run={dry_run}]')
 
-    def __init__(self, stdout: bool, dry_run=False, verbose=True, exp_code: str = None) -> None:
+    def __init__(self,
+                 stdout: bool,
+                 dry_run=False,
+                 verbose=True,
+                 exp_code: str = None) -> None:
         self.verbose = verbose
         log_base = f'{Config.LOG_ROOT}/{date.today()}'
         if exp_code is None:
