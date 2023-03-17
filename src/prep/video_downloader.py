@@ -31,7 +31,6 @@ def get_yt_url(youtube_id: str) -> str:
     return f'http://youtube.com/watch?v={youtube_id}'
 
 
-<<<<<<< HEAD
 def download_batch_ytb_dl(_batch: dict, download_path: str, dry_run: bool = False) -> None:
     logging.info(f"batch size={len(_batch):03d} {_batch}")
 
