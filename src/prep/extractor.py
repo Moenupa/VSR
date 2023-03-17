@@ -47,4 +47,5 @@ if __name__ == '__main__':
     parsed_ds = raw_ds.map(extract_fn)
 
     video_label_pairs = extract_to_dict(parsed_ds)
-    config.save_fp(lambda fp, obj: json.dump(obj, fp), 'labels.json', video_label_pairs)
+    config.save_fp(lambda fp, obj: json.dump(obj, fp), 'labels.json',
+                   video_label_pairs)
