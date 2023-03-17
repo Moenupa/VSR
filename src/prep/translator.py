@@ -6,18 +6,19 @@ class YT8M_Translator():
     # HOME = 'http://data.yt8m.org'
     CATEGORY_LOOKUP = f'{HOME}/2/j/v'
     VIDEO_LOOKUP = f'{HOME}/2/j/i'
-    
+
     def __init__(self, num_pools: int = 4):
         self.manager = PoolManager(num_pools=num_pools)
-    
-    def translate(self, url : str) -> tuple:
+
+    def translate(self, url: str) -> tuple:
         response = self.manager.request('GET', url)
         return eval(response.data[1:-1])
 
-    def translate_vid(self, _id : str):
-        return self.translate(f'{YT8M_Translator.VIDEO_LOOKUP}/{_id[:2]}/{_id}.js')
+    def translate_vid(self, _id: str):
+        return self.translate(
+            f'{YT8M_Translator.VIDEO_LOOKUP}/{_id[:2]}/{_id}.js')
 
-    def translate_cat(self, _id : str):
+    def translate_cat(self, _id: str):
         return self.translate(f'{YT8M_Translator.CATEGORY_LOOKUP}/{_id}.js')
 
 
