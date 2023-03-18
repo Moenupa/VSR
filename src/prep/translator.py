@@ -37,7 +37,7 @@ class YT8M_Translator():
     # HOME = 'http://data.yt8m.org'
     CATEGORY_LOOKUP = f'{HOME}/2/j/v'
     VIDEO_LOOKUP = f'{HOME}/2/j/i'
-    
+
     def __init__(self, num_pools: int = 4):
         self.backup_file = 'meta/translation.json'
 
@@ -85,7 +85,8 @@ class YT8M_Translator():
     def translate_vid(self, _id: str):
         '''get youtube id from fake id'''
         if not self.translation['vid'].get(_id):
-            fake_vid, ytb_vid = self.translate(f'{YT8M_Translator.VIDEO_LOOKUP}/{_id[:2]}/{_id}.js')
+            fake_vid, ytb_vid = self.translate(
+                f'{YT8M_Translator.VIDEO_LOOKUP}/{_id[:2]}/{_id}.js')
             if ytb_vid is None:
                 logging.warning(f'{_id} -> None')
                 return
@@ -95,14 +96,18 @@ class YT8M_Translator():
     def translate_cat(self, _id: str):
         '''get a list of video fake-id from category code'''
         if not self.translation['cat'].get(_id):
-            cat_id, fake_vid_list = self.translate(f'{YT8M_Translator.CATEGORY_LOOKUP}/{_id}.js')
+            cat_id, fake_vid_list = self.translate(
+                f'{YT8M_Translator.CATEGORY_LOOKUP}/{_id}.js')
             if fake_vid_list:
                 logging.info(f'{_id} -> {peek_head(fake_vid_list)}')
                 self.translation['cat'][cat_id] = fake_vid_list
 
-    def parse_categories(self, filepath: str = 'meta/yt8m_categories.csv', n: int = 100):
+    def parse_categories(self,
+                         filepath: str = 'meta/yt8m_categories.csv',
+                         n: int = 100):
         try:
-            pd.read_csv(filepath, header=None).iloc[:n, 0].apply(self.translate_cat)
+            pd.read_csv(filepath,
+                        header=None).iloc[:n, 0].apply(self.translate_cat)
         except Exception as e:
             print(e)
         finally:
@@ -124,9 +129,11 @@ class YT8M_Translator():
 
     def peek(self):
         print_head_tail(self.translation['cat'])
-        print('-'*20)
+        print('-' * 20)
         print_head_tail(self.translation['vid'], n=2)
-        print(f"{'total':10s}: {sum(1 for v in self.translation['vid'].values() if v)}")
+        print(
+            f"{'total':10s}: {sum(1 for v in self.translation['vid'].values() if v)}"
+        )
 
     def parse_from_log(self, log: str):
         with open(log, 'r') as f:
