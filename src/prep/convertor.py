@@ -5,7 +5,6 @@ import glob
 
 from src.config import Config
 
-
 _720P = (1280, 720)
 _360P = (640, 360)
 _180P = (320, 180)
@@ -26,7 +25,8 @@ def video2frames(video_path: str,
     os.makedirs(gt_path, exist_ok=True)
 
     cap = cv2.VideoCapture(video_path)
-    frame_size = (cap.get(cv2.CAP_PROP_FRAME_WIDTH), cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    frame_size = (cap.get(cv2.CAP_PROP_FRAME_WIDTH),
+                  cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     max_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
     # checking dimensions and read video metadata
@@ -46,7 +46,9 @@ def video2frames(video_path: str,
         cap.set(cv2.CAP_PROP_POS_FRAMES, start_idx)
         ret, gt = cap.read()
         while ret and count < n_frames:
-            lq = cv2.resize(gt, tuple(s//4 for s in gt_size), interpolation=cv2.INTER_AREA)
+            lq = cv2.resize(gt,
+                            tuple(s // 4 for s in gt_size),
+                            interpolation=cv2.INTER_AREA)
             cv2.imwrite(f"{os.path.join(lq_path, f'{count:06d}.png')}", lq)
             cv2.imwrite(f"{os.path.join(gt_path, f'{count:06d}.png')}", gt)
             ret, gt = cap.read()
