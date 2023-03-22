@@ -24,6 +24,7 @@ class Config():
     DEFAULT_LOG_FORMAT = '%(asctime)s.%(msecs)03d %(name)s %(levelname)s %(module)s - %(funcName)s: %(message)s'
     DEFAULT_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 
+    @staticmethod
     def _set_stdout(verbose: bool = True,
                     prompt: str = 'log setup OK -> stdout'):
         logging.basicConfig(stream=sys.stdout,
@@ -33,6 +34,7 @@ class Config():
         if verbose:
             logging.info(f'{prompt}')
 
+    @staticmethod
     def _set_logger(log_dir: str,
                     log_name: str,
                     verbose: bool = True,
@@ -63,20 +65,16 @@ class Config():
                  stdout: bool,
                  dry_run=False,
                  verbose=True,
-                 exp_code: str = None) -> None:
+                 exp_code: str = random_str()) -> None:
         self.verbose = verbose
         log_base = f'{Config.LOG_ROOT}/{date.today()}'
-        if exp_code is None:
-            while code := random_str():
-                if not os.path.exists(f'{log_base}/{code}'):
-                    break
-        else:
-            code = exp_code
+        while os.path.exists(f'{log_base}/{exp_code}'):
+            exp_code = random_str()
 
-        self.exp_code = code
-        self.log_dir = f'{log_base}/{code}'
-        self.log_name = code
-        self.__set(stdout, dry_run, f'experiment "{code}"')
+        self.exp_code = exp_code
+        self.log_dir = f'{log_base}/{exp_code}'
+        self.log_name = exp_code
+        self.__set(stdout, dry_run, f'experiment "{exp_code}"')
 
     def reset(self, stdout: bool, dry_run: bool) -> None:
         self.__set(stdout, dry_run, 'reset complete')

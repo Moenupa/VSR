@@ -132,3 +132,6 @@ dmypy.json
 data/
 log/
 out/
+
+meta/*.json
+meta/*.bak

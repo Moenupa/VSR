@@ -31,9 +31,10 @@ def get_yt_url(youtube_id: str) -> str:
     return f'http://youtube.com/watch?v={youtube_id}'
 
 
-def download_batch_ytb_dl(_batch: dict, download_path: str, dry_run: bool = False) -> None:
+def download_batch_ytb_dl(_batch: dict,
+                          download_path: str,
+                          dry_run: bool = False) -> None:
     logging.info(f"batch size={len(_batch):03d} {_batch}")
-
     '''with Pool(pool_size) as p:
         downloaded_list = p.map(partial(download_thread, path=path, dry_run=dry_run), _batch.keys())
         downloaded_entries = {vid: _batch[fid] for (fid, vid) in downloaded_list}
@@ -52,7 +53,9 @@ def download_batch_ytb_dl(_batch: dict, download_path: str, dry_run: bool = Fals
         ydl.download(vid_batch)
 
 
-def download_video(vid: str, download_path: str, dry_run: bool = False) -> None:
+def download_video(vid: str,
+                   download_path: str,
+                   dry_run: bool = False) -> None:
     os.makedirs(download_path, exist_ok=True)
     if os.path.exists(f'{download_path}/{vid}.mp4'):
         return
@@ -90,13 +93,23 @@ def download_thread(fake_id: str, path: str, dry_run: bool):
         return fake_id, vid
 
 
-def download_batch(_batch: dict, path: str, pool_size: int = 4, dry_run: bool = False) -> None:
+def download_batch(_batch: dict,
+                   path: str,
+                   pool_size: int = 4,
+                   dry_run: bool = False) -> None:
     logging.info(f"batch size={len(_batch):03d} {_batch}")
 
     with Pool(pool_size) as p:
-        downloaded_list = p.map(partial(download_thread, path=path, dry_run=dry_run), _batch.keys())
-        downloaded_entries = {vid: _batch[fid] for (fid, vid) in downloaded_list}
-        logging.info(f'batch downloaded {sum([1 for _ in downloaded_list if _ is not None])}/{len(_batch)}')
+        downloaded_list = p.map(
+            partial(download_thread, path=path, dry_run=dry_run),
+            _batch.keys())
+        downloaded_entries = {
+            vid: _batch[fid]
+            for (fid, vid) in downloaded_list
+        }
+        logging.info(
+            f'batch downloaded {sum([1 for _ in downloaded_list if _ is not None])}/{len(_batch)}'
+        )
         logging.info(f'batch entries: {downloaded_entries}')
 
 
@@ -112,7 +125,9 @@ if __name__ == '__main__':
         try:
             logging.info(f'starting iteration {i + 1} ---------->')
             batch = get_batch(fakeid_with_label)
-            download_batch_ytb_dl(batch, f'./out/youTB/download', dry_run=config.dry_run)
+            download_batch_ytb_dl(batch,
+                                  f'./out/youTB/download',
+                                  dry_run=config.dry_run)
         except Exception as err:
             logging.error(f'unknown error: {err}')
         finally:
