@@ -33,7 +33,10 @@ def download_batch(_batch: list,
         return ret
 
 
-def download_all(_video_ids: list, download_path: str, n: int = 1000, _batch_size=10,
+def download_all(_video_ids: list,
+                 download_path: str,
+                 n: int = 1000,
+                 _batch_size=10,
                  dry_run: bool = False) -> int:
     s = 0
     while s < n:

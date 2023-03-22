@@ -35,7 +35,8 @@ def video2frames(video_path: str,
         logging.warning(f'[{vid}] skipped, improper dimension: {frame_size}')
         return
     if max_frames < n_frames:
-        logging.warning(f'[{vid}] skipped, too short: {max_frames} < {n_frames}')
+        logging.warning(
+            f'[{vid}] skipped, too short: {max_frames} < {n_frames}')
         return
 
     count = 0
