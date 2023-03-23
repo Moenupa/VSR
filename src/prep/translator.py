@@ -7,29 +7,7 @@ import os
 from config import Config
 import logging
 import shutil
-
-
-def peek_head(item, n: int = 3):
-    if type(item) == str:
-        return item
-    elif type(item) == list:
-        if len(item) < n:
-            return f"{', '.join(item)}"
-        else:
-            return f"{', '.join(item[:n])}, ... {len(item) - n} more ..."
-    return item
-
-
-def print_head_tail(d: dict, n: int = 3):
-    if len(d) < n:
-        for k, v in d.items():
-            print(f'{k:10s}: {peek_head(v)}')
-    else:
-        for k in list(d)[:n]:
-            print(f'{k:10s}: {peek_head(d[k])}')
-        print(f'... {len(d) - 2 * n} items ...')
-        for k in list(d)[-n:]:
-            print(f'{k:10s}: {peek_head(d[k])}')
+from utils import peek_head, print_head_tail
 
 
 class YT8M_Translator():
