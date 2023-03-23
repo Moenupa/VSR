@@ -36,8 +36,7 @@ def video2frames(video_path: str,
             f'|{video_path}| skipped, improper dimension: {(width, height)}')
         return
     elif fps < 20:
-        logging.warning(
-            f'|{video_path}| skipped, improper FPS: {fps}')
+        logging.warning(f'|{video_path}| skipped, improper FPS: {fps}')
         return
 
     max_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
