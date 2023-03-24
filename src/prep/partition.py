@@ -2,6 +2,7 @@ import glob
 import os
 from utils import peek_head
 import csv
+import shutil
 
 
 def generate_meta(root: str, write: bool = False):
@@ -19,6 +20,9 @@ def generate_meta(root: str, write: bool = False):
     metas = sorted(gt)
     print(peek_head(metas, 3))
     if write:
+        if os.path.exists('meta.csv'):
+            shutil.copy2('meta.csv', 'meta.csv.bak')
+
         with open('meta.csv', 'w') as f:
             wr = csv.writer(f)
             for meta in metas:
