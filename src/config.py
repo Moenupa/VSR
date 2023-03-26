@@ -1,4 +1,3 @@
-import glob
 import logging
 import sys
 import os
@@ -17,7 +16,7 @@ def random_str(length: int = 6, conflicts: list = []):
     return ret
 
 
-class Config():
+class Config:
     LOG_ROOT = 'log'
 
     DEFAULT_LEVEL = logging.INFO
@@ -36,11 +35,10 @@ class Config():
 
     @staticmethod
     def _set_logger(log_dir: str,
-                    log_name: str,
                     verbose: bool = True,
                     prompt: str = 'log setup OK -> logger:'):
         os.makedirs(log_dir, exist_ok=True)
-        log_path = f'{log_dir}/{log_name}.log'
+        log_path = f'{log_dir}/.log'
         logging.basicConfig(filename=log_path,
                             level=Config.DEFAULT_LEVEL,
                             format=Config.DEFAULT_LOG_FORMAT,
@@ -50,22 +48,24 @@ class Config():
             print(f'file:///{log_abspath}')
             logging.info(f'{prompt} {log_abspath}')
 
-    def __set(self, stdout: bool, dry_run: bool, prompt: str):
+    @staticmethod
+    def log(stdout: bool, level: int, msg: str, log_dir: str = None):
+        Config.__set(stdout, False, log_dir)
+        logging.log(level, msg)
+
+    @staticmethod
+    def __set(stdout: bool, verbose: bool, log_dir: str = None):
         if stdout:
-            Config._set_stdout(verbose=self.verbose)
+            Config._set_stdout(verbose=verbose)
         else:
-            Config._set_logger(self.log_dir,
-                               self.log_name,
-                               verbose=self.verbose)
-        self.dry_run = dry_run
-        if self.verbose:
-            logging.info(f'{prompt} [stdout={stdout}], [dry_run={dry_run}]')
+            Config._set_logger(log_dir, verbose=verbose)
 
     def __init__(self,
                  stdout: bool,
                  dry_run=False,
                  verbose=True,
                  exp_code: str = random_str()) -> None:
+        self.stdout = stdout
         self.verbose = verbose
         log_base = f'{Config.LOG_ROOT}/{date.today()}'
         while os.path.exists(f'{log_base}/{exp_code}'):
@@ -73,8 +73,13 @@ class Config():
 
         self.exp_code = exp_code
         self.log_dir = f'{log_base}/{exp_code}'
-        self.log_name = exp_code
-        self.__set(stdout, dry_run, f'experiment "{exp_code}"')
+        self.dry_run = dry_run
+        self.__set(stdout, verbose, self.log_dir)
+        if verbose:
+            logging.info(f'experiment "{exp_code}" [stdout={stdout}], [dry_run={dry_run}]')
+
+    def clone(self) -> 'Config':
+        return Config(self.stdout, self.dry_run, self.verbose, self.exp_code)
 
     def reset(self, stdout: bool, dry_run: bool) -> None:
         self.__set(stdout, dry_run, 'reset complete')
