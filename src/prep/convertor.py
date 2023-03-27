@@ -59,6 +59,12 @@ def video2frames(video_path: str,
     return f"[{vid}] -> frames [{start_idx},{start_idx + count}] from [0,{max_frames}]"
 
 
+def clean(root: str):
+    for path, _, _ in list(os.walk(root))[::-1]:
+        if len(os.listdir(path)) == 0:
+            os.rmdir(path)
+
+
 def convert(clips: list, out: str, config: Config, n_threads: int = 32):
     with Pool(n_threads) as pool:
         for path in clips:
@@ -70,6 +76,9 @@ def convert(clips: list, out: str, config: Config, n_threads: int = 32):
             )
         pool.close()
         pool.join()
+
+    clean(f'{out}/lq')
+    clean(f'{out}/gt')
 
 
 if __name__ == '__main__':

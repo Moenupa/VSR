@@ -48,5 +48,5 @@ def download_all(_video_ids: list,
 if __name__ == '__main__':
     config = Config(stdout=False, dry_run=False)
     translator = YT8M_Translator()
-    video_id = translator.get_all_vid()[3000:]
+    video_id = translator.get_all_vid()
     download_all(video_id, 'data/YT8M')

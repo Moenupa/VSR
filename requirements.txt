@@ -1,7 +1,7 @@
 Brotli==1.0.9
 certifi==2022.12.7
 mutagen==1.46.0
-numpy==1.24.2
+numpy==1.23.5
 opencv-python==4.7.0.72
 pandas==1.5.3
 pycryptodomex==3.17

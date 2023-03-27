@@ -51,11 +51,13 @@ class Partition:
                 os.symlink(os.path.abspath(f'lq/{vid}'), f'{par}/lq/{idx:04d}', target_is_directory=True)
                 os.symlink(os.path.abspath(f'gt/{vid}'), f'{par}/gt/{idx:04d}', target_is_directory=True)
 
-    def annotate(self):
-        pass
+        with open(f'{metadir}/stm_gt_annotations.txt', 'w') as f:
+            for i in range(dataset_size):
+                for j in range(100):
+                    f.write(f'{i:04d}/{j:06d}.png (720, 1280, 3)\n')
 
 
 if __name__ == '__main__':
-    partition = Partition('data/sample')
-    partition.partition(dataset_size=10)
+    partition = Partition('data/STM5k')
+    partition.partition(dataset_size=300)
 

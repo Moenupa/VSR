@@ -8,7 +8,7 @@ def peek_head(e, n: int = 3):
             if len(l) < n:
                 return f"[{', '.join(l)}]"
             else:
-                return f"[{', '.join(l[:n])}, ... {len(l) - n} more ...]"
+                return f"[{', '.join(l[:n])}, ... {len(l)} elements in total ...]"
         except Exception as err:
             pass
             # print(err)
