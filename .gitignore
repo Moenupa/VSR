@@ -130,6 +130,7 @@ dmypy.json
 
 # data sources
 data/
+work_dirs/
 log/
 out/
 

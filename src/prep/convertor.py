@@ -51,8 +51,8 @@ def video2frames(video_path: str,
             lq = cv2.resize(gt,
                             tuple(s // 4 for s in gt_size),
                             interpolation=cv2.INTER_AREA)
-            cv2.imwrite(f"{os.path.join(lq_path, f'{count:06d}.png')}", lq)
-            cv2.imwrite(f"{os.path.join(gt_path, f'{count:06d}.png')}", gt)
+            cv2.imwrite(f"{os.path.join(lq_path, f'{count:08d}.png')}", lq)
+            cv2.imwrite(f"{os.path.join(gt_path, f'{count:08d}.png')}", gt)
             _, gt = cap.read()
             count += 1
     cap.release()
@@ -85,4 +85,4 @@ if __name__ == '__main__':
     config = Config(stdout=False, dry_run=False)
     # convert(glob.glob(f"data/download/*.mp4"), 'data/STM', config)
     videos = glob.glob(f"data/YT8M/*.mp4")
-    convert(videos, 'data/STM5k', config)
+    convert(videos, 'data/STM', config)
