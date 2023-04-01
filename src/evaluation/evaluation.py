@@ -9,31 +9,27 @@ from matplotlib import pyplot as plt
 DATA_ROOT = 'data/STM/test/'
 COLORS_RGB = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
-GT = {
-    'gt': lambda clip_id, frame_id: f'{DATA_ROOT}gt/{clip_id:03}/{frame_id:08d}.png',
-}
 
-LQ = {
-    'lq': lambda clip_id, frame_id: f'{DATA_ROOT}lq/{clip_id:03}/{frame_id:08d}.png',
-}
-
-
-def model_paths(model_names: list[str], display_names: list[str] = None):
+def model_paths(model_names: list, display_names: list = None):
     if display_names is None:
         display_names = model_names
     return {
-        k: lambda clip_id, frame_id: f'{DATA_ROOT}{v}/{clip_id:03}/{frame_id:08d}/{frame_id:08d}.png'
+        k: lambda clip_id, frame_id: f'{DATA_ROOT}{v}/{clip_id:04}/{frame_id:08d}/{frame_id:08d}.png'
         for k, v in zip(display_names, model_names)
     }
 
 
-def basic_paths(path_names: list[str], display_names: list[str] = None):
+def basic_paths(path_names: list, display_names: list = None):
     if display_names is None:
         display_names = path_names
     return {
-        k: lambda clip_id, frame_id: f'{DATA_ROOT}{v}/{clip_id:03}/{frame_id:08d}.png'
+        k: lambda clip_id, frame_id: f'{DATA_ROOT}{v}/{clip_id:04}/{frame_id:08d}.png'
         for k, v in zip(display_names, path_names)
     }
+
+
+GT = basic_paths(['gt'])
+LQ = basic_paths(['lq'])
 
 
 def pickle_read(path):
@@ -92,7 +88,7 @@ def plot_curve(*args, **kwargs):
     plt.show()
 
 
-def extract_features(path, features: list[tuple[int, int, int, int]], width: int = 1280, height: int = 720) -> list:
+def extract_features(path, features: list, width: int = 1280, height: int = 720) -> list:
     if not osp.exists(path):
         return [None] * (len(features) + 1)
 
@@ -103,8 +99,8 @@ def extract_features(path, features: list[tuple[int, int, int, int]], width: int
     return [img] + [img.crop(f).resize((height, height)) for f in features]
 
 
-def compare(path_interpreter: dict, clip_id: int | str, frame_id: int,
-            features: list[tuple[int, int, int, int]] = None):
+def compare(path_interpreter: dict, clip_id, frame_id: int,
+            features: list = None):
     if features is None:
         features = []
 
@@ -118,7 +114,6 @@ def compare(path_interpreter: dict, clip_id: int | str, frame_id: int,
         constrained_layout=True
     )
     axes = axes.reshape((n_rows, n_cols))
-    np.reshape()
 
     for r, (display_name, v) in enumerate(path_interpreter.items()):
         path = v(clip_id, frame_id)
@@ -141,6 +136,6 @@ if __name__ == '__main__':
     # _ = pickle_unpack('data/STM/test/pred.pkl')
     compare(
         path_interpreter={**GT, **LQ, **model_paths(['edvr'])},
-        clip_id='yy4kkeuywJY', frame_id=50,
+        clip_id=20, frame_id=50,
         features=[(200, 400, 400, 600), (400, 400, 600, 600), (1000, 400, 1200, 600)]
     )
