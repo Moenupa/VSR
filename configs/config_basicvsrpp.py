@@ -1,18 +1,18 @@
-exp_name = 'basicvsr_plusplus_c32n7_8x1_100k_stm'
+exp_name = 'basicvsr_plusplus_c64n7_8x1_100k_stm'
 
 # model settings
 model = dict(
     type='BasicVSR',
     generator=dict(
         type='BasicVSRPlusPlus',
-        mid_channels=32,
+        mid_channels=64,
         num_blocks=7,
         is_low_res_input=True,
     ),
     pixel_loss=dict(type='CharbonnierLoss', loss_weight=1.0, reduction='mean'))
 # model training and testing settings
 train_cfg = dict(fix_iter=5000)
-test_cfg = dict(metrics=['PSNR'], crop_border=0)
+test_cfg = dict(metrics=['PSNR', 'SSIM'], crop_border=0)
 
 # dataset settings
 train_dataset_type = 'SRFolderMultipleGTDataset'
@@ -75,7 +75,7 @@ demo_pipeline = [
 ]
 
 data = dict(
-    workers_per_gpu=6,
+    workers_per_gpu=4,
     train_dataloader=dict(samples_per_gpu=1, drop_last=True),  # 8 gpus
     val_dataloader=dict(samples_per_gpu=1),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=1),
@@ -88,7 +88,7 @@ data = dict(
             type=train_dataset_type,
             lq_folder='data/STM/train/lq',
             gt_folder='data/STM/train/gt',
-            num_input_frames=30,
+            num_input_frames=5,
             pipeline=train_pipeline,
             scale=4,
             test_mode=False)),
@@ -97,7 +97,7 @@ data = dict(
         type=val_dataset_type,
         lq_folder='data/STM/val/lq',
         gt_folder='data/STM/val/gt',
-        num_input_frames=100,
+        num_input_frames=50,
         pipeline=test_pipeline,
         scale=4,
         test_mode=False),
@@ -106,7 +106,7 @@ data = dict(
         type=test_dataset_type,
         lq_folder='data/STM/test/lq',
         gt_folder='data/STM/test/gt',
-        num_input_frames=100,
+        num_input_frames=50,
         pipeline=test_pipeline,
         scale=4,
         test_mode=True),
@@ -131,7 +131,7 @@ lr_config = dict(
 
 checkpoint_config = dict(interval=5000, save_optimizer=True, by_epoch=False)
 # remove gpu_collect=True in non distributed training
-evaluation = dict(interval=5000, save_image=False, gpu_collect=True)
+evaluation = dict(interval=5000, save_image=False)
 log_config = dict(
     interval=100,
     hooks=[

@@ -7,8 +7,7 @@ model = dict(
         type='BasicVSRNet',
         mid_channels=64,
         num_blocks=30,
-        spynet_pretrained='https://download.openmmlab.com/mmediting/restorers/'
-        'basicvsr/spynet_20210409-c6c1bd09.pth'),
+    ),
     pixel_loss=dict(type='CharbonnierLoss', loss_weight=1.0, reduction='mean'))
 # model training and testing settings
 train_cfg = dict(fix_iter=5000)
@@ -76,7 +75,7 @@ demo_pipeline = [
 ]
 
 data = dict(
-    workers_per_gpu=6,
+    workers_per_gpu=4,
     train_dataloader=dict(samples_per_gpu=4, drop_last=True),  # 2 gpus
     val_dataloader=dict(samples_per_gpu=1),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=1),
@@ -89,7 +88,7 @@ data = dict(
             type=train_dataset_type,
             lq_folder='data/STM/train/lq',
             gt_folder='data/STM/train/gt',
-            num_input_frames=15,
+            num_input_frames=10,
             pipeline=train_pipeline,
             scale=4,
             test_mode=False)),
@@ -98,7 +97,7 @@ data = dict(
         type=val_dataset_type,
         lq_folder='data/STM/val/lq',
         gt_folder='data/STM/val/gt',
-        num_input_frames=100,
+        num_input_frames=50,
         pipeline=test_pipeline,
         scale=4,
         test_mode=False),
@@ -107,7 +106,7 @@ data = dict(
         type=test_dataset_type,
         lq_folder='data/STM/test/lq',
         gt_folder='data/STM/test/gt',
-        num_input_frames=100,
+        num_input_frames=50,
         pipeline=test_pipeline,
         scale=4,
         test_mode=True),
@@ -132,7 +131,7 @@ lr_config = dict(
 
 checkpoint_config = dict(interval=5000, save_optimizer=True, by_epoch=False)
 # remove gpu_collect=True in non distributed training
-evaluation = dict(interval=5000, save_image=False, gpu_collect=True)
+evaluation = dict(interval=5000, save_image=False)
 log_config = dict(
     interval=100,
     hooks=[
