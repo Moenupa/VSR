@@ -1,12 +1,13 @@
-exp_name = 'basicvsr_stm'
+exp_name = 'basicvsr_plusplus_c64n7_8x1_100k_stm'
 
 # model settings
 model = dict(
     type='BasicVSR',
     generator=dict(
-        type='BasicVSRNet',
+        type='BasicVSRPlusPlus',
         mid_channels=64,
-        num_blocks=30,
+        num_blocks=7,
+        is_low_res_input=True,
     ),
     pixel_loss=dict(type='CharbonnierLoss', loss_weight=1.0, reduction='mean'))
 # model training and testing settings
@@ -20,7 +21,6 @@ test_dataset_type = 'SRFolderMultipleGTDataset'
 
 train_pipeline = [
     dict(type='GenerateSegmentIndices', interval_list=[1]),
-    dict(type='TemporalReverse', keys='lq_path', reverse_ratio=0),
     dict(
         type='LoadImageFromFileList',
         io_backend='disk',
@@ -76,7 +76,7 @@ demo_pipeline = [
 
 data = dict(
     workers_per_gpu=4,
-    train_dataloader=dict(samples_per_gpu=4, drop_last=True),  # 2 gpus
+    train_dataloader=dict(samples_per_gpu=1, drop_last=True),  # 8 gpus
     val_dataloader=dict(samples_per_gpu=1),
     test_dataloader=dict(samples_per_gpu=1, workers_per_gpu=1),
 
@@ -106,7 +106,7 @@ data = dict(
         type=test_dataset_type,
         lq_folder='data/STM/test/lq',
         gt_folder='data/STM/test/gt',
-        num_input_frames=50,
+        num_input_frames=100,
         pipeline=test_pipeline,
         scale=4,
         test_mode=True),
@@ -116,9 +116,9 @@ data = dict(
 optimizers = dict(
     generator=dict(
         type='Adam',
-        lr=2e-4,
+        lr=1e-4,
         betas=(0.9, 0.99),
-        paramwise_cfg=dict(custom_keys={'spynet': dict(lr_mult=0.125)})))
+        paramwise_cfg=dict(custom_keys={'spynet': dict(lr_mult=0.25)})))
 
 # learning policy
 total_iters = 100000
@@ -143,7 +143,7 @@ visual_config = None
 # runtime settings
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = f'./work_dirs/{exp_name}'
+work_dir = f'./out/{exp_name}'
 load_from = None
 resume_from = None
 workflow = [('train', 1)]

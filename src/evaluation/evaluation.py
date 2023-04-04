@@ -10,21 +10,12 @@ DATA_ROOT = 'data/STM/test/'
 COLORS_RGB = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 
-def model_paths(model_names: list, display_names: list = None):
-    if display_names is None:
-        display_names = model_names
+def basic_paths(dirnames: list, hints: list = None, fmt: str = '{vid:04}/{fid:08d}.png'):
+    if hints is None:
+        hints = dirnames
     return {
-        k: lambda clip_id, frame_id: f'{DATA_ROOT}{v}/{clip_id:04}/{frame_id:08d}/{frame_id:08d}.png'
-        for k, v in zip(display_names, model_names)
-    }
-
-
-def basic_paths(path_names: list, display_names: list = None):
-    if display_names is None:
-        display_names = path_names
-    return {
-        k: lambda clip_id, frame_id: f'{DATA_ROOT}{v}/{clip_id:04}/{frame_id:08d}.png'
-        for k, v in zip(display_names, path_names)
+        hint: f'{DATA_ROOT}{dirname}/{fmt}'
+        for hint, dirname in zip(hints, dirnames)
     }
 
 
@@ -115,18 +106,18 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
     )
     axes = axes.reshape((n_rows, n_cols))
 
-    for r, (display_name, v) in enumerate(path_interpreter.items()):
-        path = v(clip_id, frame_id)
-        print(path)
+    for row, (hint, path_fmt) in enumerate(path_interpreter.items()):
+        path = path_fmt.format(vid=clip_id, fid=frame_id)
+        print(f'{hint:10s}: {path}')
         extracted = extract_features(path, features)
-        for c in range(n_cols):
-            ax = axes[r, c]
-            if img := extracted[c]:
+        for col in range(n_cols):
+            ax = axes[row, col]
+            if img := extracted[col]:
                 ax.imshow(img)
-            if c == 0:
-                ax.set_ylabel(display_name)
-            if r == 0:
-                ax.set_title(f'feature_{c}' if c > 0 else 'original')
+            if col == 0:
+                ax.set_ylabel(hint)
+            if row == 0:
+                ax.set_title(f'feature_{col}' if col > 0 else 'original')
             ax.set_yticks([])
             ax.set_xticks([])
     plt.show()
@@ -135,7 +126,10 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
 if __name__ == '__main__':
     # _ = pickle_unpack('data/STM/test/pred.pkl')
     compare(
-        path_interpreter={**GT, **LQ, **model_paths(['edvr'])},
-        clip_id=20, frame_id=50,
+        path_interpreter={
+            **GT, **LQ, **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
+            **basic_paths(['basicvsr', 'basicvsrpp']),
+        },
+        clip_id=20, frame_id=40,
         features=[(200, 400, 400, 600), (400, 400, 600, 600), (1000, 400, 1200, 600)]
     )

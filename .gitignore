@@ -128,11 +128,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# data sources
-data/
+# ignore all symbolic links
+data
+tools
+
+# local working directory, used for logging, debugging, etc.
 work_dirs/
 log/
 out/
 
+# out put files in meta
 meta/*.json
 meta/*.bak

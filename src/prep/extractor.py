@@ -22,14 +22,14 @@ def extract_to_dict(parsed_dataset) -> dict:
     ret = {}
 
     iterator = iter(parsed_dataset)
-    record = iterator.get_next()
+    record = next(iterator)
 
     try:
         while record:
             fake_vid = record['id'].numpy().decode()
             labels = record['labels'].values.numpy().tolist()
             ret[fake_vid] = labels
-            record = iterator.get_next()
+            record = next(iterator)
     except tf.errors.OutOfRangeError:
         pass
 

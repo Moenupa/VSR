@@ -9,6 +9,8 @@ import cv2
 META_DIR = 'meta'
 META_FILE = f'{META_DIR}/vid_list.csv'
 
+np.random.seed(3407)
+
 
 def dump_arr(arr: np.ndarray, path: str, index: bool = True, header: bool = False):
     """
@@ -105,18 +107,21 @@ class Partition:
         for par, data in [('train', train), ('val', val), ('test', test)]:
             dump_arr(data, f'{META_DIR}/{par}.csv')
 
-            shutil.rmtree(f'{par}/lq', ignore_errors=True)
-            shutil.rmtree(f'{par}/gt', ignore_errors=True)
-            os.makedirs(f'{par}/lq', exist_ok=True)
-            os.makedirs(f'{par}/gt', exist_ok=True)
+            for dtset in ['lq', 'gt']:
+                if os.path.exists(f'{par}/{dtset}'):
+                    shutil.rmtree(f'{par}/{dtset}', ignore_errors=True)
+                os.makedirs(f'{par}/{dtset}', exist_ok=True)
 
-            for idx, vid in enumerate(data):
-                os.symlink(os.path.abspath(f'lq/{vid}'), f'{par}/lq/{idx:04d}', target_is_directory=True)
-                os.symlink(os.path.abspath(f'gt/{vid}'), f'{par}/gt/{idx:04d}', target_is_directory=True)
+                for idx, vid in enumerate(data):
+                    os.symlink(os.path.abspath(f'{dtset}/{vid}'), f'{par}/{dtset}/{idx:04d}', target_is_directory=True)
 
-    def restore_partition(self, dry_run: bool = False):
+    def restore_partition(self, dry_run: bool = False, from_backup_file: bool = False):
         for par in ['train', 'val', 'test']:
-            dataset = load_arr(f'{META_DIR}/{par}.csv', index_col=0, header=None)
+            if from_backup_file:
+                dataset = load_arr(f'{META_DIR}/{par}.csv.bak', index_col=0, header=None)
+            else:
+                dataset = load_arr(f'{META_DIR}/{par}.csv', index_col=0, header=None)
+
             if dry_run:
                 continue
 
@@ -130,5 +135,5 @@ class Partition:
 
 if __name__ == '__main__':
     partition = Partition('data/STM')
-    # partition.partition(dataset_size=300)
-    partition.restore_partition(dry_run=True)
+    partition.partition(dataset_size=3000)
+    # partition.restore_partition(dry_run=True)
