@@ -42,6 +42,16 @@ def load_arr(path: str, index_col: int = 0, header: int = None) -> list:
     return ret
 
 
+def clear_dir(paths: list) -> bool:
+    for path in paths:
+        if not os.path.exists(path):
+            print(f'path not exist, {path}')
+            return False
+        shutil.rmtree(path, ignore_errors=True)
+        os.makedirs(path, exist_ok=True)
+    return True
+
+
 class Partition:
 
     def __init__(self, root: str):
@@ -108,9 +118,7 @@ class Partition:
             dump_arr(data, f'{META_DIR}/{par}.csv')
 
             for dtset in ['lq', 'gt']:
-                if os.path.exists(f'{par}/{dtset}'):
-                    shutil.rmtree(f'{par}/{dtset}', ignore_errors=True)
-                os.makedirs(f'{par}/{dtset}', exist_ok=True)
+                clear_dir([f'{par}/{dtset}'])
 
                 for idx, vid in enumerate(data):
                     os.symlink(os.path.abspath(f'{dtset}/{vid}'), f'{par}/{dtset}/{idx:04d}', target_is_directory=True)
@@ -125,10 +133,14 @@ class Partition:
             if dry_run:
                 continue
 
+            if not clear_dir([f'{par}/lq', f'{par}/gt']):
+                continue
+
             for idx, vid in enumerate(dataset):
                 if vid not in self.vid_list:
                     print(f'video {vid} not found in dataset')
                     continue
+
                 os.symlink(os.path.abspath(f'lq/{vid}'), f'{par}/lq/{idx:04d}', target_is_directory=True)
                 os.symlink(os.path.abspath(f'gt/{vid}'), f'{par}/gt/{idx:04d}', target_is_directory=True)
 
