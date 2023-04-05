@@ -104,7 +104,7 @@ data = dict(
             type=train_dataset_type,
             lq_folder='data/STM/train/lq',
             gt_folder='data/STM/train/gt',
-            num_input_frames=10,
+            num_input_frames=5,
             pipeline=train_pipeline,
             scale=4,
             test_mode=False)),
@@ -130,11 +130,11 @@ data = dict(
 optimizers = dict(generator=dict(type='Adam', lr=4e-4, betas=(0.9, 0.999)))
 
 # learning policy
-total_iters = 100000
+total_iters = 60000
 lr_config = dict(
     policy='CosineRestart',
     by_epoch=False,
-    periods=[100000],
+    periods=[60000],
     restart_weights=[1],
     min_lr=1e-7)
 

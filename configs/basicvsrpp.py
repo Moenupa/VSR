@@ -121,11 +121,11 @@ optimizers = dict(
         paramwise_cfg=dict(custom_keys={'spynet': dict(lr_mult=0.25)})))
 
 # learning policy
-total_iters = 100000
+total_iters = 60000
 lr_config = dict(
     policy='CosineRestart',
     by_epoch=False,
-    periods=[100000],
+    periods=[60000],
     restart_weights=[1],
     min_lr=1e-7)
 

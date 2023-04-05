@@ -304,8 +304,8 @@ optimizers = dict(
     discriminator=dict(type='Adam', lr=1e-4, betas=(0.9, 0.99)))
 
 # learning policy
-total_iters = 100000
-lr_config = dict(policy='Step', by_epoch=False, step=[400000], gamma=1)
+total_iters = 60000
+lr_config = dict(policy='Step', by_epoch=False, step=[60000], gamma=1)
 
 checkpoint_config = dict(interval=5000, save_optimizer=True, by_epoch=False)
 
