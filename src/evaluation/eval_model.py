@@ -2,25 +2,29 @@ import os.path as osp
 import pickle
 from random import randint
 
+import numpy as np
 import pandas as pd
 from PIL import Image, ImageDraw
 from matplotlib import pyplot as plt
+from matplotlib.axes import Axes
 
-DATA_ROOT = 'data/STM/test/'
+from eval_constants import *
+from evaluation.metrics import Metrics
+
 COLORS_RGB = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
 
 def basic_paths(dirnames: list, hints: list = None, fmt: str = '{vid:04}/{fid:08d}.png'):
     if hints is None:
-        hints = dirnames
+        hints = [i.upper() for i in dirnames]
     return {
         hint: f'{DATA_ROOT}{dirname}/{fmt}'
         for hint, dirname in zip(hints, dirnames)
     }
 
 
-GT = basic_paths(['gt'])
-LQ = basic_paths(['lq'])
+GT = basic_paths(['gt'], ['Ground-Truth'])
+LQ = basic_paths(['lq'], ['Low-Quality'])
 
 
 def pickle_read(path):
@@ -83,11 +87,12 @@ def extract_features(path, features: list, width: int = 1280, height: int = 720)
     if not osp.exists(path):
         return [None] * (len(features) + 1)
 
-    img = Image.open(path).resize((width, height))
-    draw = ImageDraw.Draw(img)
+    img = Image.open(path).resize((width, height), resample=None)
+    img_draw = img.copy()
+    draw = ImageDraw.Draw(img_draw)
     for i, f in enumerate(features):
         draw.rectangle((f[0], f[1], f[2] - 1, f[3] - 1), outline=COLORS_RGB[i], width=3)
-    return [img] + [img.crop(f).resize((height, height)) for f in features]
+    return [img, img_draw] + [img_draw.crop(f).resize((height, height)) for f in features]
 
 
 def compare(path_interpreter: dict, clip_id, frame_id: int,
@@ -101,25 +106,36 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
     figure, axes = plt.subplots(
         n_rows, n_cols,
         sharex='col', sharey='all',
-        width_ratios=[1280] + [720] * len(features),
+        width_ratios=[1280] + [720] * (n_cols - 1),
         constrained_layout=True
     )
     axes = axes.reshape((n_rows, n_cols))
+    gt = None
 
     for row, (hint, path_fmt) in enumerate(path_interpreter.items()):
         path = path_fmt.format(vid=clip_id, fid=frame_id)
         print(f'{hint:10s}: {path}')
-        extracted = extract_features(path, features)
+        original, *outlined = extract_features(path, features)
+        if row == 0:
+            gt = np.array(original)
+            ssim, psnr = 1, 0
+        else:
+            ssim = Metrics.ssim(gt, np.array(original))
+            psnr = Metrics.psnr(gt, np.array(original))
         for col in range(n_cols):
-            ax = axes[row, col]
-            if img := extracted[col]:
-                ax.imshow(img)
-            if col == 0:
-                ax.set_ylabel(hint)
-            if row == 0:
-                ax.set_title(f'feature_{col}' if col > 0 else 'original')
+            ax: Axes = axes[row, col]
+            ax.spines[['top', 'bottom', 'left', 'right']].set_visible(False)
             ax.set_yticks([])
             ax.set_xticks([])
+            if img := outlined[col]:
+                ax.imshow(img)
+            if row == 0:
+                ax.set_title(f'feature_{col}' if col > 0 else 'original')
+            if col == 0:
+                if row == 0:
+                    ax.set_ylabel(f'{hint}\n')
+                else:
+                    ax.set_ylabel(f'{hint}\n$\\regular_{{PSNR: {psnr:.2f} dB}}$\n$\\regular_{{SSIM: {ssim:.5f}}}$')
     plt.show()
 
 
@@ -127,9 +143,9 @@ if __name__ == '__main__':
     # _ = pickle_unpack('data/STM/test/pred.pkl')
     compare(
         path_interpreter={
-            **GT, **LQ, **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
+            **GT, **LQ, # **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
             **basic_paths(['basicvsr', 'basicvsrpp']),
         },
-        clip_id=20, frame_id=40,
+        clip_id=1, frame_id=40,
         features=[(200, 400, 400, 600), (400, 400, 600, 600), (1000, 400, 1200, 600)]
     )
