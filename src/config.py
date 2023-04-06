@@ -54,6 +54,10 @@ class LogUtils:
         logging.log(level, msg)
 
     @staticmethod
+    def log2(msg: str, config: 'Config', level: int = logging.INFO):
+        LogUtils.log(config.stdout, level, msg, config.log_dir)
+
+    @staticmethod
     def set(stdout: bool, verbose: bool, log_dir: str = None):
         if stdout:
             LogUtils._set_stdout(verbose=verbose)
