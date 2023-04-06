@@ -6,6 +6,10 @@ import pandas as pd
 import numpy as np
 import cv2
 
+import matplotlib.pyplot as plt
+from PIL import Image
+from mpl_toolkits.axes_grid1 import ImageGrid
+
 META_DIR = 'meta'
 META_FILE = f'{META_DIR}/vid_list.csv'
 
@@ -52,7 +56,7 @@ def clear_dir(paths: list) -> bool:
     return True
 
 
-class Partition:
+class Dataset:
 
     def __init__(self, root: str):
         self.root = root
@@ -61,9 +65,9 @@ class Partition:
         if os.path.exists(META_FILE):
             self.vid_list = pd.read_csv(META_FILE, header=None).values.flatten().tolist()
         else:
-            self.vid_list = Partition.get_vid_list(ignore_deprecated=True)
+            self.vid_list = Dataset.get_vid_list(ignore_deprecated=True)
 
-        print(peek_head(self.vid_list, 11))
+        # print(peek_head(self.vid_list, 11))
 
     @staticmethod
     def get_vid_list(ignore_deprecated: bool = True) -> list:
@@ -144,8 +148,25 @@ class Partition:
                 os.symlink(os.path.abspath(f'lq/{vid}'), f'{par}/lq/{idx:04d}', target_is_directory=True)
                 os.symlink(os.path.abspath(f'gt/{vid}'), f'{par}/gt/{idx:04d}', target_is_directory=True)
 
+    def sample(self, size: tuple = (10, 10), frame_id: int = 50, partitions=None):
+        if partitions is None:
+            partitions = ['train', 'test', 'val']
+        for par in partitions:
+            fig = plt.figure(par, figsize=size, dpi=100, layout='tight')
+            grid = ImageGrid(fig, 111, nrows_ncols=size, axes_pad=0, aspect='equal', share_all=True, label_mode='1')
+            # print(f'{par}/gt/*', glob.glob(f'{par}/gt/*')[:10])
+            clip_paths = np.random.choice(glob.glob(f'{par}/gt/*'), size).flatten()
+
+            for ax, clip_path in zip(grid, clip_paths):
+                img_path = f'{clip_path}/{frame_id:08d}.png'
+                ax.axis('off')
+                ax.imshow(Image.open(img_path).crop((280, 0, 1000, 720)))
+
+            fig.savefig(f'{par}_sample.png', bbox_inches='tight')
+
 
 if __name__ == '__main__':
-    partition = Partition('data/STM')
-    partition.partition(dataset_size=3000)
+    partition = Dataset('data/STM')
+    # partition.partition(dataset_size=3000)
     # partition.restore_partition(dry_run=True)
+    partition.sample()

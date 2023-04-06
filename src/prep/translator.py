@@ -15,6 +15,54 @@ from config import Config
 from utils import peek_head, print_head_tail
 
 
+def plot_cat_distribution(n: int = 100, n_label: int = 100):
+    translater = YT8M_Translator()
+    fid_list = translater.get_translated_fakeid()
+    vid_list = Dataset('data/STM').get_vid_list()
+
+    df = translater.get_cat_distribution(fid_list, vid_list).iloc[:n, :]
+    print(df)
+    colors = 0.9 - np.random.rand(100, 3, ) / 2
+    fig = plt.figure('STM category distribution', figsize=(2560/300, 1440/300), dpi=300, layout='tight')
+
+    plt.scatter(
+        df.iloc[:, 1],
+        df.iloc[:, 2],
+        s=df.iloc[:, 3],
+        c=colors
+    )
+    plt.xlabel('YT8M Video Count Per Category')
+    plt.ylabel('STM Translated Video Count Per Category')
+    plt.xscale('log')
+    plt.yscale('log')
+    plt.xlim(1e4, 1e6)
+    plt.ylim(2e1, 1e4)
+    for i in random.choices(np.arange(n), weights=df.iloc[:n, 1], k=round(math.log(n_label, 1.2))):
+        name, x, y = df.iloc[i, :3].values
+        noise = math.log(y + 1, 4e2)
+        if i % 2 == 0:
+            plt.text(x, y * noise, name, c=colors[i] / 2)
+        else:
+            plt.text(x, y / noise, name, c=colors[i] / 2)
+    fig.savefig('STM_distribution_correlation')
+
+    fig = plt.figure('YT8M categorical distribution', figsize=(2560/300, 1440/300), dpi=300, layout='tight')
+    plt.barh(df.iloc[:, 0], df.iloc[:, 1], color=colors)
+    plt.yticks(rotation=0, fontsize=4)
+    plt.xscale('log')
+    plt.margins(y=0)
+    plt.ylabel('YT8M Tag Distribution')
+    fig.savefig('YT8M_category_distribution')
+
+    fig = plt.figure('STM categorical distribution', figsize=(2560 / 300, 1440 / 300), dpi=300, layout='tight')
+    plt.barh(df.iloc[:, 0], df.iloc[:, 2], color=colors)
+    plt.yticks(rotation=0, fontsize=4)
+    plt.xscale('log')
+    plt.margins(y=0)
+    plt.ylabel('STM Tag Distribution')
+    fig.savefig('STM_category_distribution')
+
+
 class YT8M_Translator():
     HOME = 'https://storage.googleapis.com/data.yt8m.org'
     # HOME = 'http://data.yt8m.org'
@@ -157,46 +205,26 @@ class YT8M_Translator():
             random.shuffle(ret)
         return ret
 
-    def get_cat_distribution(self, vid_list: list) -> pd.DataFrame:
+    def get_cat_distribution(self, fid_list: list, vid_list: list) -> pd.DataFrame:
         translated_count_by_cat = {}
-        for cat_name, value in self.translation['cat'].items():
-            translated_count_by_cat[cat_name] = len(set(value).intersection(vid_list))
-        tmp = pd.DataFrame.from_dict(translated_count_by_cat, orient='index', columns=['translated_count'])
-        ret = pd.concat([self.cat_dict, tmp], axis=1).fillna(0).astype(dtype={'translated_count': int})
+        downloaded_count_by_cat = {}
+        for cat_name, d_fid_list in self.translation['cat'].items():
+            translated_count_by_cat[cat_name] = len(set(fid_list).intersection(d_fid_list))
+            d_vid_list = list(map(self.lookup_vid, d_fid_list))
+            downloaded_count_by_cat[cat_name] = len(set(vid_list).intersection(d_vid_list))
+        translated = pd.DataFrame.from_dict(translated_count_by_cat, orient='index', columns=['translated'])
+        downloaded = pd.DataFrame.from_dict(downloaded_count_by_cat, orient='index', columns=['downloaded'])
+        ret = pd.concat([self.cat_dict, translated, downloaded], axis=1).fillna(0).astype(dtype={'translated': int,
+                                                                                                 'downloaded': int})
         return ret
-
-    def plot_cat_distribution(self, vid_list: list, n: int = 100, n_label: int = 100):
-        df = self.get_cat_distribution(vid_list).iloc[:n, :]
-        colors = 0.9 - np.random.rand(100, 3, ) / 2
-        plt.scatter(
-            df.iloc[:, 1],
-            df.iloc[:, 2],
-            s=df.iloc[:, 2],
-            c=colors
-        )
-        plt.xlabel('YT8M Video Count Per Category')
-        plt.ylabel('STM Translated Video Count Per Category')
-        plt.xscale('log')
-        plt.yscale('log')
-        plt.xlim(1e4, 1e6)
-        plt.ylim(1e1, 1e4)
-        for i in random.choices(np.arange(n), weights=df.iloc[:n, 1], k=round(math.log(n_label, 1.2))):
-            name, x, y = df.iloc[i, :].values
-            noise = math.log(y, 4e2)
-            if i % 2 == 0:
-                plt.text(x, y * noise, name, c=colors[i] / 2)
-            else:
-                plt.text(x, y / noise, name, c=colors[i] / 2)
-        plt.show()
 
 
 if __name__ == '__main__':
+    from dataset import Dataset
     config = Config(stdout=True, dry_run=False)
-    translater = YT8M_Translator()
+    # translater = YT8M_Translator()
     # translater.parse_categories()
     # translater.update_vid_from_category()
     # translater.parse_videos()
     # translater.peek()
-    video_list = translater.get_translated_fakeid()
-    print(peek_head(video_list))
-    translater.plot_cat_distribution(video_list)
+    plot_cat_distribution()

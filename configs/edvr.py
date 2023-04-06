@@ -1,4 +1,4 @@
-exp_name = 'edvrm_wotsa_x4_g8_600k_stm'
+exp_name = 'edvrm_wotsa_x4_g8_60k_stm3k'
 
 # model settings
 model = dict(
