@@ -1,6 +1,6 @@
-import os
-from yt_dlp import YoutubeDL
 import logging
+
+from yt_dlp import YoutubeDL
 
 from config import Config
 from translator import YT8M_Translator
@@ -39,14 +39,15 @@ def download_all(_video_ids: list,
                  _batch_size=10,
                  dry_run: bool = False) -> int:
     s = 0
-    while s < n:
-        batch = chunk(_video_ids, _batch_size)
+    for batch in chunk(_video_ids, _batch_size):
         s += download_batch(batch, download_path, dry_run)
+        if s >= n:
+            break
     return s
 
 
 if __name__ == '__main__':
-    config = Config(stdout=False, dry_run=False)
+    config = Config(stdout=True, dry_run=False)
     translator = YT8M_Translator()
-    video_id = translator.get_all_vid()
-    download_all(video_id, 'data/YT8M')
+    video_id = translator.get_translated_vid()
+    download_all(video_id, 'data/YT8M', n=5)

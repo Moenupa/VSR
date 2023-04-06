@@ -50,7 +50,7 @@ def video2frames(video_path: str,
         while count < n_frames:
             lq = cv2.resize(gt,
                             tuple(s // 4 for s in gt_size),
-                            interpolation=cv2.INTER_AREA)
+                            interpolation=cv2.INTER_CUBIC)
             cv2.imwrite(f"{os.path.join(lq_path, f'{count:08d}.png')}", lq)
             cv2.imwrite(f"{os.path.join(gt_path, f'{count:08d}.png')}", gt)
             _, gt = cap.read()

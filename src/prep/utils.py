@@ -20,9 +20,14 @@ def print_head_tail(d: dict, n: int = 3):
     if len(d) < n:
         for k, v in d.items():
             print(f'{k:10s}: {peek_head(v)}')
-    else:
-        for k in list(d)[:n]:
-            print(f'{k:10s}: {peek_head(d[k])}')
-        print(f'... {len(d) - 2 * n} items ...')
-        for k in list(d)[-n:]:
-            print(f'{k:10s}: {peek_head(d[k])}')
+        return
+
+    if n == 0:
+        print(f'... {len(d)} items ...')
+        return
+
+    for k in list(d)[:n]:
+        print(f'{k:10s}: {peek_head(d[k])}')
+    print(f'... {len(d) - 2 * n} items ...')
+    for k in list(d)[-n:]:
+        print(f'{k:10s}: {peek_head(d[k])}')
