@@ -1,8 +1,10 @@
 import glob
 import logging
-import multiprocessing
 import os
+import pickle
 import random
+from functools import partial
+from multiprocessing import Pool
 
 import cv2
 import pandas as pd
@@ -58,63 +60,33 @@ def video2frames(video_path: str,
             _, gt = cap.read()
             count += 1
     cap.release()
-    return [vid, max_frames, fps, start_idx, count]
-
-
-def clean(root: str):
-    for path, _, _ in list(os.walk(root))[::-1]:
-        if len(os.listdir(path)) == 0:
-            os.rmdir(path)
-
-
-def worker(i: int, d: dict, *args, **kwargs):
-    try:
-        d[i] = video2frames(*args, **kwargs)
-        vid, max_frames, fps, start_idx, count = d[i]
+    if 'config' in kwargs:
         LogUtils.log(
             kwargs['config'].stdout, logging.INFO,
             f"[{vid}] -> frames [{start_idx},{start_idx + count}] from [0,{max_frames}]",
             kwargs['config'].log_dir
         )
-    except Exception as e:
-        LogUtils.log(
-            kwargs['config'].stdout, logging.WARNING,
-            f"[{i}] -> {e}",
-            kwargs['config'].log_dir
+    return [vid, max_frames, fps, start_idx, count]
+
+
+def _callback(data: list):
+    df = pd.DataFrame(data, columns=['vid', 'frames', 'fps', 'ex_start', 'extracted'])
+    pickle.dump(df, open('data/STM/df.pkl', 'wb'))
+
+
+def convert(clips: list, out: str, config: Config) -> None:
+    with Pool(32) as p:
+        _ = p.map_async(
+            partial(video2frames, out_base=out, dry_run=config.dry_run),
+            clips,
+            callback=_callback
         )
-
-
-def convert(clips: list, out: str, config: Config) -> pd.DataFrame:
-    clean(f'{out}/lq')
-    clean(f'{out}/gt')
-
-    manager = multiprocessing.Manager()
-    ret_dict = manager.dict()
-    jobs = []
-    for i, clip in enumerate(clips):
-        p = multiprocessing.Process(target=worker, kwargs={
-            'i': i,
-            'd': ret_dict,
-            'video_path': clip,
-            'out_base': out,
-            'start_idx': -1,
-            'n_frames': 100,
-            'dry_run': config.dry_run,
-            'gt_size': _720P,
-            'config': config
-        })
-        jobs.append(p)
-        p.start()
-
-    for proc in jobs:
-        proc.join()
-
-    return pd.DataFrame.from_dict(ret_dict, orient='index', columns=['vid', 'frames', 'fps', 'ex_start', 'extracted'])
+        p.close()
+        p.join()
 
 
 if __name__ == '__main__':
     config = Config(stdout=True, dry_run=True)
     # convert(glob.glob(f"data/download/*.mp4"), 'data/STM', config)
     videos = glob.glob(f"data/YT8M/*.mp4")
-    ret = convert(videos, 'data/STM', config)
-    print(ret)
+    convert(videos, 'data/STM', config)

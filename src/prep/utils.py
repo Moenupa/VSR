@@ -1,4 +1,5 @@
-from collections.abc import Iterable
+import os
+import shutil
 
 
 def peek_head(e, n: int = 3):
@@ -31,3 +32,13 @@ def print_head_tail(d: dict, n: int = 3):
     print(f'... {len(d) - 2 * n} items ...')
     for k in list(d)[-n:]:
         print(f'{k:10s}: {peek_head(d[k])}')
+
+
+def clear_dir(paths: list) -> bool:
+    for path in paths:
+        if not os.path.exists(path):
+            print(f'path not exist, {path}')
+            return False
+        shutil.rmtree(path, ignore_errors=True)
+        os.makedirs(path, exist_ok=True)
+    return True

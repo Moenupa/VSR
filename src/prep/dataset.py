@@ -1,14 +1,15 @@
 import glob
 import os
-from utils import peek_head
 import shutil
-import pandas as pd
-import numpy as np
-import cv2
 
+import cv2
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 from PIL import Image
 from mpl_toolkits.axes_grid1 import ImageGrid
+
+from utils import clear_dir, peek_head
 
 META_DIR = 'meta'
 META_FILE = f'{META_DIR}/vid_list.csv'
@@ -44,16 +45,6 @@ def load_arr(path: str, index_col: int = 0, header: int = None) -> list:
         print(path, '->', peek_head(ret, 3))
 
     return ret
-
-
-def clear_dir(paths: list) -> bool:
-    for path in paths:
-        if not os.path.exists(path):
-            print(f'path not exist, {path}')
-            return False
-        shutil.rmtree(path, ignore_errors=True)
-        os.makedirs(path, exist_ok=True)
-    return True
 
 
 class Dataset:
