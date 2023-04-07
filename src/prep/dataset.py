@@ -51,27 +51,27 @@ class Dataset:
 
     def __init__(self, root: str):
         self.root = root
-        os.chdir(root)
         self.vid_list = []
         if os.path.exists(META_FILE):
             self.vid_list = pd.read_csv(META_FILE, header=None).values.flatten().tolist()
         else:
-            self.vid_list = Dataset.get_vid_list(ignore_deprecated=True)
+            self.vid_list = Dataset.get_vid_list(self.root, ignore_deprecated=True)
 
         # print(peek_head(self.vid_list, 11))
 
     @staticmethod
-    def get_vid_list(ignore_deprecated: bool = True) -> list:
+    def get_vid_list(root: str, ignore_deprecated: bool = True) -> list:
         """Get all video ids from lq and gt folders
 
         Args:
+            root: root directory of the dataset, should contain `lq` and `gt` folders
             ignore_deprecated: if False, will check if all frames are valid (runs terribly slow)
 
         Returns:
             list: video ids
         """
-        lq = set(os.path.basename(i) for i in glob.glob(f'lq/*'))
-        gt = set(os.path.basename(i) for i in glob.glob(f'gt/*'))
+        lq = set(os.path.basename(i) for i in glob.glob(f'{root}/lq/*'))
+        gt = set(os.path.basename(i) for i in glob.glob(f'{root}/gt/*'))
 
         intersection = gt.intersection(lq)
         assert len(intersection) != 0
@@ -86,8 +86,8 @@ class Dataset:
         collected = []
         for idx, vid in enumerate(all_vid_list):
             deprecated = False
-            lq_frames = glob.glob(f'lq/{vid}/*')
-            gt_frames = glob.glob(f'gt/{vid}/*')
+            lq_frames = glob.glob(f'{root}/lq/{vid}/*')
+            gt_frames = glob.glob(f'{root}/gt/{vid}/*')
             for f in lq_frames + gt_frames:
                 deprecated = (cv2.imread(f) is None)
                 if deprecated:
@@ -95,10 +95,15 @@ class Dataset:
 
             if not deprecated:
                 collected.append(vid)
+            else:
+                print(f'{idx}/{len(all_vid_list)}: {vid} deprecated')
+        return collected
 
-            print(f'\r{idx}/{len(all_vid_list)}: {vid} {"deprecated" if deprecated else "valid"}', end='')
-
-    def partition(self, dataset_size: int = -1, val_pct: float = 0.1, test_pct: float = 0.1):
+    def partition(self, dataset_size: int = -1, val_pct: float = 0.1, test_pct: float = 0.1, target_dir: str = None):
+        if target_dir is None:
+            target_dir = self.root
+        else:
+            os.makedirs(target_dir, exist_ok=True)
         if dataset_size > 0:
             dataset = np.random.choice(self.vid_list, dataset_size, replace=False)
         else:
@@ -110,25 +115,27 @@ class Dataset:
 
         os.makedirs(META_DIR, exist_ok=True)
         for par, data in [('train', train), ('val', val), ('test', test)]:
-            dump_arr(data, f'{META_DIR}/{par}.csv')
+            dump_arr(data, f'{target_dir}/{META_DIR}/{par}.csv')
 
-            for dtset in ['lq', 'gt']:
-                clear_dir([f'{par}/{dtset}'])
+        self.restore_partition(target_dir, dry_run=False)
 
-                for idx, vid in enumerate(data):
-                    os.symlink(os.path.abspath(f'{dtset}/{vid}'), f'{par}/{dtset}/{idx:04d}', target_is_directory=True)
-
-    def restore_partition(self, dry_run: bool = False, from_backup_file: bool = False):
+    def restore_partition(self, target_dir: str = None, dry_run: bool = False, from_backup_file: bool = False):
+        if target_dir is None:
+            target_dir = self.root
+        else:
+            os.makedirs(target_dir, exist_ok=True)
         for par in ['train', 'val', 'test']:
             if from_backup_file:
-                dataset = load_arr(f'{META_DIR}/{par}.csv.bak', index_col=0, header=None)
+                dataset = load_arr(f'{target_dir}/{META_DIR}/{par}.csv.bak', index_col=0, header=None)
             else:
-                dataset = load_arr(f'{META_DIR}/{par}.csv', index_col=0, header=None)
+                dataset = load_arr(f'{target_dir}/{META_DIR}/{par}.csv', index_col=0, header=None)
 
             if dry_run:
                 continue
 
-            if not clear_dir([f'{par}/lq', f'{par}/gt']):
+            os.makedirs(f'{target_dir}/{par}/lq', exist_ok=True)
+            os.makedirs(f'{target_dir}/{par}/gt', exist_ok=True)
+            if not clear_dir([f'{target_dir}/{par}/lq', f'{target_dir}/{par}/gt']):
                 continue
 
             for idx, vid in enumerate(dataset):
@@ -136,8 +143,10 @@ class Dataset:
                     print(f'video {vid} not found in dataset')
                     continue
 
-                os.symlink(os.path.abspath(f'lq/{vid}'), f'{par}/lq/{idx:04d}', target_is_directory=True)
-                os.symlink(os.path.abspath(f'gt/{vid}'), f'{par}/gt/{idx:04d}', target_is_directory=True)
+                os.symlink(os.path.abspath(f'{self.root}/lq/{vid}'), f'{target_dir}/{par}/lq/{idx:04d}',
+                           target_is_directory=True)
+                os.symlink(os.path.abspath(f'{self.root}/gt/{vid}'), f'{target_dir}/{par}/gt/{idx:04d}',
+                           target_is_directory=True)
 
     def sample(self, size: tuple = (10, 10), frame_id: int = 50, partitions=None):
         if partitions is None:
@@ -146,18 +155,18 @@ class Dataset:
             fig = plt.figure(par, figsize=size, dpi=100, layout='tight')
             grid = ImageGrid(fig, 111, nrows_ncols=size, axes_pad=0, aspect='equal', share_all=True, label_mode='1')
             # print(f'{par}/gt/*', glob.glob(f'{par}/gt/*')[:10])
-            clip_paths = np.random.choice(glob.glob(f'{par}/gt/*'), size).flatten()
+            clip_paths = np.random.choice(glob.glob(f'{self.root}/{par}/gt/*'), size).flatten()
 
             for ax, clip_path in zip(grid, clip_paths):
                 img_path = f'{clip_path}/{frame_id:08d}.png'
                 ax.axis('off')
                 ax.imshow(Image.open(img_path).crop((280, 0, 1000, 720)))
 
-            fig.savefig(f'{par}_sample.png', bbox_inches='tight')
+            fig.savefig(f'{self.root}/{par}_sample.png', bbox_inches='tight')
 
 
 if __name__ == '__main__':
-    partition = Dataset('data/STM')
-    # partition.partition(dataset_size=3000)
-    # partition.restore_partition(dry_run=True)
-    partition.sample()
+    dataset = Dataset('data/STM')
+    # dataset.partition(dataset_size=3000)
+    dataset.restore_partition(dry_run=False, target_dir='data/STM300', from_backup_file=True)
+    # dataset.sample()

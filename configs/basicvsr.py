@@ -83,7 +83,7 @@ data = dict(
     # train
     train=dict(
         type='RepeatDataset',
-        times=1000,
+        times=10,
         dataset=dict(
             type=train_dataset_type,
             lq_folder='data/STM/train/lq',
@@ -97,7 +97,7 @@ data = dict(
         type=val_dataset_type,
         lq_folder='data/STM/val/lq',
         gt_folder='data/STM/val/gt',
-        num_input_frames=50,
+        num_input_frames=10,
         pipeline=test_pipeline,
         scale=4,
         test_mode=False),

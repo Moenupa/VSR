@@ -143,9 +143,9 @@ if __name__ == '__main__':
     # _ = pickle_unpack('data/STM/test/pred.pkl')
     compare(
         path_interpreter={
-            **GT, **LQ, # **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
-            **basic_paths(['basicvsr', 'basicvsrpp']),
+            **GT, **LQ, **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
+            **basic_paths(['basicvsr100', 'basicvsrpp']),
         },
-        clip_id=1, frame_id=40,
-        features=[(200, 400, 400, 600), (400, 400, 600, 600), (1000, 400, 1200, 600)]
+        clip_id=2, frame_id=0,
+        features=[(100, 450, 200, 550), (500, 300, 600, 400), (900, 250, 1000, 350)]
     )
