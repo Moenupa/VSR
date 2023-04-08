@@ -104,8 +104,8 @@ data = dict(
     # test
     test=dict(
         type=test_dataset_type,
-        lq_folder='data/STM/test/lq',
-        gt_folder='data/STM/test/gt',
+        lq_folder='data/STM3k/test30/lq',
+        gt_folder='data/STM3k/test30/gt',
         num_input_frames=100,
         pipeline=test_pipeline,
         scale=4,

@@ -1,5 +1,6 @@
 import glob
 import os
+import pickle
 import shutil
 
 import cv2
@@ -148,7 +149,7 @@ class Dataset:
                 os.symlink(os.path.abspath(f'{self.root}/gt/{vid}'), f'{target_dir}/{par}/gt/{idx:04d}',
                            target_is_directory=True)
 
-    def sample(self, size: tuple = (10, 10), frame_id: int = 50, partitions=None):
+    def grid(self, size: tuple = (10, 10), frame_id: int = 50, partitions=None):
         if partitions is None:
             partitions = ['train', 'test', 'val']
         for par in partitions:
@@ -164,9 +165,44 @@ class Dataset:
 
             fig.savefig(f'{self.root}/{par}_sample.png', bbox_inches='tight')
 
+    @staticmethod
+    def sample(path: str, sample_path: str, sample_size: int = 30, sample_offset: int = 0):
+        Dataset.init_dataset(sample_path)
+        for i in range(sample_offset, sample_size + sample_offset):
+            os.symlink(os.path.abspath(f'{path}/lq/{i:04d}'), f'{sample_path}/lq/{i:04d}')
+            os.symlink(os.path.abspath(f'{path}/gt/{i:04d}'), f'{sample_path}/gt/{i:04d}')
+
+    @staticmethod
+    def init_dataset(path: str, sub_dirs: list = None):
+        if sub_dirs is None:
+            sub_dirs = ['lq', 'gt']
+
+        for sub_dir in sub_dirs:
+            os.makedirs(f'{path}/{sub_dir}', exist_ok=True)
+
+    @staticmethod
+    def link_clip(src: str, dest: str, cli_range, sets = None):
+        '''create dest as a symlink to src'''
+        pass
+
+    @staticmethod
+    def shuffle_frame(path: str, sample_path: str, sample_size: int = 10000):
+        Dataset.init_dataset(sample_path)
+        frame_mapper = []
+        for i in range(sample_size):
+            n_clip = len(glob.glob(f'{path}/gt/*'))
+            video_id, frame_id = np.random.randint(0, n_clip), np.random.randint(0, 100)
+            frame_mapper.append((video_id, frame_id))
+            os.symlink(os.path.abspath(f'{path}/lq/{video_id:04d}/{frame_id:08d}.png'), f'{sample_path}/lq/{i:04d}.png')
+            os.symlink(os.path.abspath(f'{path}/gt/{video_id:04d}/{frame_id:08d}.png'), f'{sample_path}/gt/{i:04d}.png')
+        pickle.dump(frame_mapper, open(f'{sample_path}/frame_mapper.pkl', 'wb'))
+
+
 
 if __name__ == '__main__':
     dataset = Dataset('data/STM')
     # dataset.partition(dataset_size=3000)
-    dataset.restore_partition(dry_run=False, target_dir='data/STM300', from_backup_file=True)
-    # dataset.sample()
+    # dataset.restore_partition(dry_run=False, target_dir='data/STM300', from_backup_file=True)
+    # dataset.grid()
+    # dataset.sample('data/STM3k/test', 'data/STM3k/test30', sample_size=30, sample_offset=0)
+    # Dataset.shuffle_frame('data/STM3k/val', 'data/STM3k/val_frames', sample_size=1000)

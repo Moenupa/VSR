@@ -1,27 +1,22 @@
-exp_name = 'realbasicvsr_c64b20_1x30x8_lr5e-5_150k_reds'
+exp_name = 'ganbasicvsr_c64b20_1x30x8_lr5e-5_30k_stm3k'
 
 scale = 4
 
 # model settings
 model = dict(
-    type='RealBasicVSR',
+    type='GANBasicVSR',
     generator=dict(
-        type='RealBasicVSRNet',
+        type='GANBasicVSRNet',
         mid_channels=64,
         num_propagation_blocks=20,
-        num_cleaning_blocks=20,
-        # 255 for train, val
-        # 5 for test
-        dynamic_refine_thres=5,
-        is_fix_cleaning=False,
-        is_sequential_cleaning=True),
+        srgan_pretrained=None
+    ),
     discriminator=dict(
         type='UNetDiscriminatorWithSpectralNorm',
         in_channels=3,
         mid_channels=64,
         skip_connection=True),
     pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
-    cleaning_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
     perceptual_loss=dict(
         type='PerceptualLoss',
         layer_weights={
@@ -45,6 +40,7 @@ model = dict(
     is_use_sharpened_gt_in_percep=True,
     is_use_sharpened_gt_in_gan=False,
     is_use_ema=True,
+
 )
 
 # model training and testing settings
@@ -306,13 +302,13 @@ optimizers = dict(
     discriminator=dict(type='Adam', lr=1e-4, betas=(0.9, 0.99)))
 
 # learning policy
-total_iters = 30000
-lr_config = dict(policy='Step', by_epoch=False, step=[30000], gamma=1)
+total_iters = 300
+lr_config = dict(policy='Step', by_epoch=False, step=[300], gamma=1)
 
 checkpoint_config = dict(interval=5000, save_optimizer=True, by_epoch=False)
 
 # remove gpu_collect=True in non distributed training
-evaluation = dict(interval=5000, save_image=False)
+evaluation = dict(interval=100, save_image=False)
 log_config = dict(
     interval=100,
     hooks=[

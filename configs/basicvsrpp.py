@@ -8,6 +8,7 @@ model = dict(
         mid_channels=64,
         num_blocks=7,
         is_low_res_input=True,
+        # cpu_cache_length=100,
     ),
     pixel_loss=dict(type='CharbonnierLoss', loss_weight=1.0, reduction='mean'))
 # model training and testing settings
@@ -104,8 +105,8 @@ data = dict(
     # test
     test=dict(
         type=test_dataset_type,
-        lq_folder='data/STM/test/lq',
-        gt_folder='data/STM/test/gt',
+        lq_folder='data/STM3k/test30/lq',
+        gt_folder='data/STM3k/test30/gt',
         num_input_frames=100,
         pipeline=test_pipeline,
         scale=4,
