@@ -85,7 +85,7 @@ def plot_curve(*args, **kwargs):
 
 def extract_features(path, features: list, width: int = 1280, height: int = 720) -> list:
     if not osp.exists(path):
-        return [None] * (len(features) + 1)
+        return [None] * (len(features) + 2)
 
     img = Image.open(path).resize((width, height), resample=None)
     img_draw = img.copy()
@@ -119,9 +119,11 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
         if row == 0:
             gt = np.array(original)
             ssim, psnr = 1, 0
-        else:
+        elif original is not None:
             ssim = Metrics.ssim(gt, np.array(original))
             psnr = Metrics.psnr(gt, np.array(original))
+        else:
+            ssim, psnr = 0, 0
         for col in range(n_cols):
             ax: Axes = axes[row, col]
             ax.spines[['top', 'bottom', 'left', 'right']].set_visible(False)
@@ -144,8 +146,8 @@ if __name__ == '__main__':
     compare(
         path_interpreter={
             **GT, **LQ, **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
-            **basic_paths(['basicvsr100', 'basicvsrpp']),
+            **basic_paths(['basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr']),
         },
-        clip_id=2, frame_id=0,
+        clip_id=4, frame_id=10,
         features=[(100, 450, 200, 550), (500, 300, 600, 400), (900, 250, 1000, 350)]
     )

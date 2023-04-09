@@ -1,2 +1,2 @@
 DATA_ROOT = 'data/STM/sample9/'
-DATA_ROOT = 'data/STM300/test/'
+DATA_ROOT = 'data/STM3k/test30/'

@@ -136,6 +136,8 @@ tools
 work_dirs/
 log/
 out/
+out2/
+backups/
 
 # out put files in meta
 meta/*.json
