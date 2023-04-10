@@ -13,6 +13,9 @@ from eval_model import plot_curve
 import skvideo.measure as measure
 import cv2
 from src.prep.utils import get_clip_paths
+import lpips as lp
+import torch
+import torchvision.transforms as transforms
 
 
 def snapshot(path: str, sample_ratio: 5):
@@ -46,13 +49,28 @@ def stat_dataset(pkl: str):
     plt.show()
 
 
-def load_video(path: str, ext: str = 'png') -> np.ndarray:
+def load_video(path: str, ext: str = 'png', colored: bool = False) -> np.ndarray:
     frames = glob.glob(f'{path}/*.{ext}')
-    return np.array([cv2.resize(cv2.imread(frame, cv2.IMREAD_GRAYSCALE), (1280, 720)) for frame in frames])
+    if colored:
+        return np.array([
+            cv2.normalize(
+                cv2.cvtColor(
+                    cv2.resize(
+                        cv2.imread(frame, cv2.IMREAD_COLOR),
+                        (1280, 720)
+                    ),
+                    cv2.COLOR_BGR2RGB
+                ).astype('float32'),
+                None, -1, 1, cv2.NORM_MINMAX
+            )
+            for frame in frames
+        ])
+    else:
+        return np.array([cv2.resize(cv2.imread(frame, cv2.IMREAD_GRAYSCALE), (1280, 720)) for frame in frames])
 
 
-def load_videos(paths: list, ext: str = 'png') -> list:
-    return [load_video(path, ext) for path in paths]
+def load_videos(paths: list, ext: str = 'png', colored: bool = False) -> list:
+    return [load_video(path, ext, colored) for path in paths]
 
 
 def eval_by_metric(metric, video: np.ndarray, ref_video: np.ndarray = None) -> np.ndarray:
@@ -62,7 +80,7 @@ def eval_by_metric(metric, video: np.ndarray, ref_video: np.ndarray = None) -> n
         return metric(video)
 
 
-def eval_ds(root: str, indices: np.ndarray, metric, fmt: str):
+def eval_ds(root: str, indices: np.ndarray, metric, fmt: str, colored: bool = False):
     if not os.path.exists(root):
         raise ValueError(f'path {root} does not exist')
 
@@ -72,11 +90,26 @@ def eval_ds(root: str, indices: np.ndarray, metric, fmt: str):
 
     for idx, clip in enumerate(indices):
         print(f'{idx}/{len(indices)}, clip:{clip}')
-        gt, lq = load_videos(get_clip_paths(root, 'val', clip, fmt=fmt))
+        gt, lq = load_videos(get_clip_paths(root, 'val', clip, fmt=fmt), colored=colored)
         assert gt.shape[0] != 0, f'gt shape {gt.shape}'
         assert lq.shape[0] != 0, f'lq shape {lq.shape}'
         res = eval_by_metric(metric, gt, lq)
         pickle.dump(res, open(f'{stats_dir}/{metric.__name__}_{clip}.pkl', 'wb'))
+
+loss_fn_alex = lp.LPIPS(net='alex')
+
+def lpips(img0: np.ndarray, img1: np.ndarray):
+    #if video1 is not None:
+    #    for i0, i1 in zip(video0, video1):
+      # best forward scores
+    # transform = transforms.Compose([transforms.v2.ToDtype(torch.cuda.FloatTensor)])
+    tensor0 = torch.from_numpy(img0).float()
+    tensor1 = torch.from_numpy(img1).float()
+    tensor = torch.stack((tensor0, tensor1))
+    tensor = torch.transpose(tensor, 2, 4)
+    tensor = torch.transpose(tensor, 3, 4)
+    d = loss_fn_alex(tensor[0], tensor[1])
+    return d.detach().numpy().flatten().tolist()
 
 
 def compare_curve(root_paths: list, metric_name: str, ylim: tuple):
@@ -109,11 +142,12 @@ def compare_curve(root_paths: list, metric_name: str, ylim: tuple):
 
 if __name__ == "__main__":
     # stat_dataset(f"{DATA_ROOT}cat_stats.pkl")
-    np.random.seed(3407)
-    #eval_ds('data/STM', np.random.randint(0, 300, 31), measure.psnr, fmt='{dataset}/{partition}/{set}/{clip_id:04}')
-    #eval_ds('data/REDS', np.arange(0, 30), measure.psnr, fmt='{dataset}/{partition}/{set}/{clip_id:03}')
-    compare_curve(['data/REDS', 'data/STM'], 'niqe', (0, 30))
-    compare_curve(['data/REDS', 'data/STM'], 'ssim', (0.8, 1))
-    compare_curve(['data/REDS', 'data/STM'], 'psnr', (10, 50))
+    #np.random.seed(3407)
+    eval_ds('data/STM', np.random.randint(0, 300, 31), lpips,
+            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=True)
+    eval_ds('data/REDS', np.arange(0, 30), lpips,
+            fmt='{dataset}/{partition}/{set}/{clip_id:03}', colored=True)
+    #compare_curve(['data/REDS', 'data/STM'], 'niqe', (0, 30))
+    #compare_curve(['data/REDS', 'data/STM'], 'ssim', (0.8, 1))
+    #compare_curve(['data/REDS', 'data/STM'], 'psnr', (10, 50))
     #compare_curve(['data/REDS', 'data/STM'], 'brisque_features', (0, 30))
-
