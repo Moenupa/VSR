@@ -204,5 +204,5 @@ if __name__ == '__main__':
     # dataset.partition(dataset_size=3000)
     # dataset.restore_partition(dry_run=False, target_dir='data/STM300', from_backup_file=True)
     # dataset.grid()
-    # dataset.sample('data/STM3k/test', 'data/STM3k/test30', sample_size=30, sample_offset=0)
+    Dataset.sample('data/STM/test', 'data/STM3k/test30', sample_size=30, sample_offset=0)
     # Dataset.shuffle_frame('data/STM3k/val', 'data/STM3k/val_frames', sample_size=1000)

@@ -42,3 +42,9 @@ def clear_dir(paths: list) -> bool:
         shutil.rmtree(path, ignore_errors=True)
         os.makedirs(path, exist_ok=True)
     return True
+
+
+def get_clip_paths(dataset: str, partition: str, clip_id, sets: list = ['gt', 'lq'],
+                   fmt: str = '{dataset}/{partition}/{set}/{clip_id:04}'):
+    # e.g. data/REDS/test/lq/clip_id
+    return [fmt.format(dataset=dataset, partition=partition, clip_id=clip_id, set=set) for set in sets]
