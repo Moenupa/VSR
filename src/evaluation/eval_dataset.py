@@ -115,12 +115,15 @@ def lpips(img0: np.ndarray, img1: np.ndarray):
 def compare_curve(root_paths: list, metric_name: str, ylim: tuple):
     fig, ax = plt.subplots(figsize=(8, 6))
 
-    _colors = ['r', 'b']
+    _colors = ['r', 'b', 'g', 'y']
     plots = []
+    means = []
     for i, root in enumerate(root_paths):
         pkl_files = glob.glob(f'{root}/stats/{metric_name}_*')
         collected_results = [pickle.load(open(pkl, 'rb')) for pkl in pkl_files]
-        dataset_stat = pd.DataFrame(collected_results, index=pkl_files).transpose().iloc[:, :30]
+        dataset_stat = pd.DataFrame(collected_results, index=pkl_files).transpose()
+        means.append(dataset_stat.iloc[:, :].mean().mean())
+        dataset_stat = dataset_stat.iloc[:, :30]
         boxplot = ax.boxplot(dataset_stat, vert=True, patch_artist=True, labels=np.arange(1,31), widths=0.8,
                    flierprops={'marker': 'x', 'markersize': 2})
         for box in boxplot['boxes']:
@@ -137,7 +140,9 @@ def compare_curve(root_paths: list, metric_name: str, ylim: tuple):
     ax.set_ylabel(f'{metric_name.upper()} Score')
     fig.tight_layout()
     fig.savefig(f'data/{metric_name}_comp.png', dpi=300)
-    return
+
+    for p, mean in zip(root_paths, means):
+        print(f'{p:20s} {metric_name}: {mean}')
 
 
 if __name__ == "__main__":
@@ -147,7 +152,7 @@ if __name__ == "__main__":
             fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=True)
     eval_ds('data/REDS', np.arange(0, 30), lpips,
             fmt='{dataset}/{partition}/{set}/{clip_id:03}', colored=True)
-    #compare_curve(['data/REDS', 'data/STM'], 'niqe', (0, 30))
-    #compare_curve(['data/REDS', 'data/STM'], 'ssim', (0.8, 1))
-    #compare_curve(['data/REDS', 'data/STM'], 'psnr', (10, 50))
-    #compare_curve(['data/REDS', 'data/STM'], 'brisque_features', (0, 30))
+    compare_curve(['data/REDS', 'data/STM'], 'niqe', (0, 30))
+    compare_curve(['data/REDS', 'data/STM'], 'ssim', (0.8, 1))
+    compare_curve(['data/REDS', 'data/STM'], 'psnr', (10, 50))
+    compare_curve(['data/REDS', 'data/STM'], 'lpips', (0, 1))
