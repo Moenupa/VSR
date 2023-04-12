@@ -1,4 +1,8 @@
 import os.path
+import shutil
+
+import cv2
+import numpy as np
 from PIL import Image
 import glob
 from eval_constants import DATA_ROOT
@@ -41,8 +45,17 @@ def crop_grid(img_path: str, size: tuple = (10, 10), padding: int = 2):
         p.join()
 
 
+def format_edvr_output(edvr_dir = 'data/STM3k/test30/edvr'):
+    clips = glob.glob(f'{edvr_dir}/*')
+    for clip in clips:
+        files = glob.glob(f'{clip}/*/*.png')
+        for file in files:
+            shutil.move(file, f'{clip}/')
+
+
 if __name__ == '__main__':
-    os.chdir(f'{DATA_ROOT}/ganbasicvsr')
+    format_edvr_output()
+    os.chdir(f'{DATA_ROOT}/realbasicvsr')
     src_pics = glob.glob('*.png')
     print(src_pics)
 

@@ -1,4 +1,4 @@
-exp_name = 'ganbasicvsr_c64b20_1x30x8_lr5e-5_30k_stm3k'
+exp_name = 'ganbasicvsr_spynet_c64b20_1x30x8_lr5e-5_30k_stm3k'
 
 scale = 4
 
@@ -35,6 +35,7 @@ model = dict(
                 fake_label_val=0),
         ),
         srgan_checkpoint='work_dirs/esrgan_x4c64b23g32_g1_100k_stm3k/iter_40000.pth',
+        spynet_pretrained='https://download.openmmlab.com/mmediting/restorers/basicvsr/spynet_20210409-c6c1bd09.pth',
     ),
     discriminator=dict(
         type='UNetDiscriminatorWithSpectralNorm',
@@ -91,9 +92,7 @@ train_pipeline = [
         channel_order='rgb'),
     dict(type='RescaleToZeroOne', keys=['lq', 'gt']),
     dict(type='PairedRandomCrop', gt_patch_size=256),
-    dict(
-        type='Flip', keys=['lq', 'gt'], flip_ratio=0.5,
-        direction='horizontal'),
+    dict(type='Flip', keys=['lq', 'gt'], flip_ratio=0.5, direction='horizontal'),
     dict(type='Flip', keys=['lq', 'gt'], flip_ratio=0.5, direction='vertical'),
     dict(type='RandomTransposeHW', keys=['lq', 'gt'], transpose_ratio=0.5),
     dict(type='FramesToTensor', keys=['lq', 'gt']),
@@ -179,7 +178,7 @@ optimizers = dict(
     discriminator=dict(type='Adam', lr=1e-4, betas=(0.9, 0.99)))
 
 # learning policy
-total_iters = 30000
+total_iters = 40000
 lr_config = dict(policy='Step', by_epoch=False, step=[300], gamma=1)
 
 checkpoint_config = dict(interval=5000, save_optimizer=True, by_epoch=False)

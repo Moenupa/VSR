@@ -1,4 +1,4 @@
-exp_name = 'realbasicvsr_c64b20_1x30x8_lr5e-5_150k_reds'
+exp_name = 'realbasicvsr_c64b20_1x30x8_lr5e-5_30k_stm3k'
 
 scale = 4
 
@@ -12,8 +12,8 @@ model = dict(
         num_cleaning_blocks=20,
         # 255 for train, val
         # 5 for test
-        dynamic_refine_thres=5,
-        is_fix_cleaning=False,
+        dynamic_refine_thres=255,
+        is_fix_cleaning=True,
         is_sequential_cleaning=True),
     discriminator=dict(
         type='UNetDiscriminatorWithSpectralNorm',
@@ -41,8 +41,8 @@ model = dict(
         loss_weight=5e-2,
         real_label_val=1.0,
         fake_label_val=0),
-    is_use_sharpened_gt_in_pixel=True,
-    is_use_sharpened_gt_in_percep=True,
+    is_use_sharpened_gt_in_pixel=False,
+    is_use_sharpened_gt_in_percep=False,
     is_use_sharpened_gt_in_gan=False,
     is_use_ema=True,
 )
@@ -61,26 +61,20 @@ train_pipeline = [
     dict(
         type='LoadImageFromFileList',
         io_backend='disk',
+        key='lq',
+        channel_order='rgb'),
+    dict(
+        type='LoadImageFromFileList',
+        io_backend='disk',
         key='gt',
         channel_order='rgb'),
-    dict(type='FixedCrop', keys=['gt'], crop_size=(256, 256)),
-    dict(type='RescaleToZeroOne', keys=['gt']),
-    dict(type='Flip', keys=['gt'], flip_ratio=0.5, direction='horizontal'),
-    dict(type='Flip', keys=['gt'], flip_ratio=0.5, direction='vertical'),
-    dict(type='RandomTransposeHW', keys=['gt'], transpose_ratio=0.5),
-    dict(type='MirrorSequence', keys=['gt']),
-    dict(
-        type='UnsharpMasking',
-        keys=['gt'],
-        kernel_size=51,
-        sigma=0,
-        weight=0.5,
-        threshold=10),
-    dict(type='CopyValues', src_keys=['gt_unsharp'], dst_keys=['lq']),
-    dict(type='Quantize', keys=['lq']),
-    dict(type='FramesToTensor', keys=['lq', 'gt', 'gt_unsharp']),
-    dict(
-        type='Collect', keys=['lq', 'gt', 'gt_unsharp'], meta_keys=['gt_path'])
+    dict(type='RescaleToZeroOne', keys=['lq', 'gt']),
+    dict(type='PairedRandomCrop', gt_patch_size=256),
+    dict(type='Flip', keys=['lq', 'gt'], flip_ratio=0.5, direction='horizontal'),
+    dict(type='Flip', keys=['lq', 'gt'], flip_ratio=0.5, direction='vertical'),
+    dict(type='RandomTransposeHW', keys=['lq', 'gt'], transpose_ratio=0.5),
+    dict(type='FramesToTensor', keys=['lq', 'gt']),
+    dict(type='Collect', keys=['lq', 'gt'], meta_keys=['lq_path', 'gt_path'])
 ]
 
 val_pipeline = [

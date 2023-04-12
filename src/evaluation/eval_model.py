@@ -1,3 +1,4 @@
+import os
 import os.path as osp
 import pickle
 from random import randint
@@ -114,7 +115,7 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
 
     for row, (hint, path_fmt) in enumerate(path_interpreter.items()):
         path = path_fmt.format(vid=clip_id, fid=frame_id)
-        print(f'{hint:10s}: {path}')
+        # print(f'{hint:10s}: {path}')
         original, *outlined = extract_features(path, features)
         if row == 0:
             gt = np.array(original)
@@ -138,16 +139,28 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
                     ax.set_ylabel(f'{hint}\n')
                 else:
                     ax.set_ylabel(f'{hint}\n$\\regular_{{PSNR: {psnr:.2f} dB}}$\n$\\regular_{{SSIM: {ssim:.5f}}}$')
-    plt.show()
 
+    os.makedirs('data/STM3k/eval', exist_ok=True)
+    figure.set_size_inches(12, 16)
+    figure.savefig(f'data/STM3k/eval/{clip_id:04d}_{frame_id:02d}.png', dpi=300)
+    plt.clf()
 
 if __name__ == '__main__':
     # _ = pickle_unpack('data/STM/test/pred.pkl')
-    compare(
-        path_interpreter={
-            **GT, **LQ, **basic_paths(['edvr'], fmt='{vid:04}/{fid:08d}/{fid:08d}.png'),
-            **basic_paths(['basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr']),
-        },
-        clip_id=4, frame_id=10,
-        features=[(100, 450, 200, 550), (500, 300, 600, 400), (900, 250, 1000, 350)]
-    )
+    for c in [4, 5, 8, 12, 17, 27, 28, 29]:
+        for f in range(1,10):
+            print(f'\rclip: {c:02d}, frame: {f}0', end='')
+            compare(
+                path_interpreter={
+                    **GT, **LQ,
+                    **basic_paths([
+                        'edvr',
+                        'basicvsr',
+                        'basicvsrpp',
+                        'realbasicvsr',
+                        'ganbasicvsr'
+                    ]),
+                },
+                clip_id=c, frame_id=f*10,
+                features=[(100, 620, 200, 720), (500, 300, 600, 400), (900, 250, 1000, 350)]
+            )
