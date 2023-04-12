@@ -49,7 +49,7 @@ class Metrics:
 
 
 if __name__ == '__main__':
-    from eval_constants import DATA_ROOT
+    from constants import DATA_ROOT
     lq_path = f'{DATA_ROOT}lq/{0:04d}/{0:08d}.png'
     gt_path = f'{DATA_ROOT}gt/{0:04d}/{0:08d}.png'
     lq = Image.open(lq_path).resize((1280, 720), resample=None)

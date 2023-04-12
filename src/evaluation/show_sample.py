@@ -9,7 +9,7 @@ from PIL import Image, ImageDraw
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 
-from eval_constants import *
+from constants import *
 from evaluation.metrics import Metrics
 
 COLORS_RGB = plt.rcParams["axes.prop_cycle"].by_key()["color"]

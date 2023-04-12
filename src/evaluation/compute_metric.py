@@ -10,15 +10,14 @@ import numpy as np
 import pandas as pd
 from mpl_toolkits.axes_grid1 import ImageGrid
 
-from eval_constants import *
-from eval_model import plot_curve
+from constants import *
+from show_sample import plot_curve
 from src.dump import pickle_dump
 import skvideo.measure as measure
 import cv2
 from src.prep.utils import get_clip_paths
 import lpips as lp
 import torch
-import torchvision.transforms as transforms
 pd.set_option('use_inf_as_na',True)
 
 loss_fn_alex = lp.LPIPS(net='alex')

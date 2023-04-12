@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import glob
-from eval_constants import DATA_ROOT
+from constants import DATA_ROOT
 from multiprocessing import Pool
 
 Image.MAX_IMAGE_PIXELS = 1e9
