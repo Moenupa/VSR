@@ -20,7 +20,7 @@ import lpips as lp
 import torch
 pd.set_option('use_inf_as_na',True)
 
-loss_fn_alex = lp.LPIPS(net='alex')
+loss_fn_alex = lp.LPIPS(net='vgg')
 
 
 def snapshot(path: str, sample_ratio: int = 4):
@@ -86,16 +86,18 @@ def _call(metric, video: np.ndarray, ref_video: np.ndarray = None) -> np.ndarray
         return metric(video)
 
 
-def eval_ds(root: str, clip_ids: np.ndarray, metric, par: str, fmt: str, colored: bool = False):
+def eval_ds(root: str, clip_ids: np.ndarray, metric, par: str, fmt: str, colored: bool = False, ref_sets: list = None):
     if not os.path.exists(root):
         raise ValueError(f'root {root} does not exist')
     if not os.path.exists(f'{root}/{par}'):
         raise ValueError(f'partition {root}/{par} does not exist')
+    if ref_sets is None:
+        ref_sets = ['lq', 'edvr', 'realbasicvsr', 'basicvsrpp', 'ganbasicvsr']
 
     GT_SET = 'gt'
-    for ref_set in ['lq', 'edvr', 'realbasicvsr', 'basicvsr', 'basicvsrpp', 'ganbasicvsr']:
+    for ref_set in ref_sets:
         for idx, clip in enumerate(clip_ids):
-            print(f'{ref_set} {idx}/{len(clip_ids)}, clip:{clip}')
+            print(f'{metric.__name__} {ref_set} {idx}/{len(clip_ids)}, clip:{clip}')
 
             gt, lq = load_videos(get_clip_paths(root, par, clip, sets=[GT_SET, ref_set], fmt=fmt), colored=colored)
             assert gt.shape[0] != 0, f'gt shape {gt.shape}'
@@ -162,7 +164,7 @@ def plot_metric_by_model(root_paths: list, metric_name: str, ylim: tuple):
 
         collected_results = [pickle.load(open(pkl, 'rb')) for pkl in pkl_files]
         dataset_stat = pd.DataFrame(collected_results, index=pkl_files).transpose()
-        means.append(dataset_stat.iloc[:, :].mean().mean())
+        means.append(dataset_stat.iloc[:, :].median().mean())
         dataset_stat = dataset_stat.iloc[:, :30]
         boxplot = ax.boxplot(dataset_stat, vert=True, patch_artist=True, labels=np.arange(1, 31), widths=0.8,
                              flierprops={'marker': 'x', 'markersize': 2})
@@ -198,19 +200,19 @@ if __name__ == "__main__":
             fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=True)
     eval_ds('data/REDS', np.arange(0, 30), lpips, 'val',
             fmt='{dataset}/{partition}/{set}/{clip_id:03}', colored=True)'''
-    '''eval_ds('data/STM3k', np.arange(0, 30), measure.psnr, 'test30',
+    eval_ds('data/STM3k', np.arange(0, 30), measure.psnr, 'test30',
             fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=False)
     eval_ds('data/STM3k', np.arange(0, 30), measure.ssim, 'test30',
-            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=False)'''
-    '''eval_ds('data/STM3k', np.arange(0, 30), measure.niqe, 'test30',
-            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=False)'''
-    '''eval_ds('data/STM3k', np.arange(0, 30), lpips, 'test30',
-            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=True)'''
+            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=False)
+    eval_ds('data/STM3k', np.arange(0, 30), measure.niqe, 'test30',
+            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=False)
+    eval_ds('data/STM3k', np.arange(0, 30), lpips, 'test30',
+            fmt='{dataset}/{partition}/{set}/{clip_id:04}', colored=True)
     #plot_metric_by_dataset(['data/REDS', 'data/STM'], 'niqe', (0, 30))
     #plot_metric_by_dataset(['data/REDS', 'data/STM'], 'ssim', (0.8, 1))
     #plot_metric_by_dataset(['data/REDS', 'data/STM'], 'psnr', (10, 50))
     #plot_metric_by_dataset(['data/REDS', 'data/STM'], 'lpips', (0, 1))
-    plot_metric_by_model(['lq', 'edvr', 'basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr'], 'psnr', (10, 50))
+    #plot_metric_by_model(['lq', 'edvr', 'basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr'], 'psnr', (10, 50))
     #plot_metric_by_model(['lq', 'edvr', 'basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr'], 'ssim', (0.8, 1))
     #plot_metric_by_model(['lq', 'edvr', 'basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr'], 'niqe', (0, 30))
     #plot_metric_by_model(['lq', 'edvr', 'basicvsr', 'basicvsrpp', 'realbasicvsr', 'ganbasicvsr'], 'lpips', (0, 1))

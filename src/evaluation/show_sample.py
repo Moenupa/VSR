@@ -1,3 +1,4 @@
+import glob
 import os
 import os.path as osp
 import pickle
@@ -29,34 +30,21 @@ LQ = basic_paths(['lq'], ['Low-Quality'])
 
 
 def pickle_read(path):
-    with open(path, 'rb') as f:
-        return pickle.load(f)
+    return pickle.load(open(path, 'rb'))
 
 
 def pickle_unpack(path):
     data = list(next(iter(record.values())) for record in pickle_read(path))
     df = pd.DataFrame(data)
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
 
-    test_size, metrics = df.shape
-    print(f'test_size: {test_size}, metrics: {metrics}')
+    # test_size, metrics = df.shape
+    # print(f'test_size: {test_size}, metrics: {metrics}')
+    print('-'*30)
+    print(os.path.dirname(path))
+    print(df.median(axis=0).to_string())
 
-    # figure, axes = plt.subplots(metrics, 1, sharex='all')
-    clip_id = randint(0, test_size // 100 - 1) * 100
-    print(f'selected clip_id: {clip_id // 100}')
-
-    '''for i in range(metrics):
-        ylim = (0, 1) if df.columns[i] == 'SSIM' else (0, None)
-        df.iloc[clip_id:clip_id + 100, i].plot(
-            ax=axes[i], legend=True,
-            xlim=(clip_id - 10, clip_id + 110),
-            ylim=ylim,
-            color=colors[i],
-        )
-        axes[i].legend(loc='lower right')
-    plt.show()'''
-    plot_curve(
-        df.iloc[:, :],
-    )
+    # plot_curve(df.iloc[:, :])
 
 
 def plot_curve(*args, **kwargs):
@@ -141,15 +129,19 @@ def compare(path_interpreter: dict, clip_id, frame_id: int,
                     ax.set_ylabel(f'{hint}\n$\\regular_{{PSNR: {psnr:.2f} dB}}$\n$\\regular_{{SSIM: {ssim:.5f}}}$')
 
     os.makedirs('data/STM3k/eval', exist_ok=True)
-    figure.set_size_inches(12, 16)
+    figure.set_size_inches(12, 12)
     figure.savefig(f'data/STM3k/eval/{clip_id:04d}_{frame_id:02d}.png', dpi=300)
-    plt.clf()
+    plt.close(figure)
+
 
 if __name__ == '__main__':
-    # _ = pickle_unpack('data/STM/test/pred.pkl')
-    for c in [4, 5, 8, 12, 17, 27, 28, 29]:
-        for f in range(1,10):
-            print(f'\rclip: {c:02d}, frame: {f}0', end='')
+    files = glob.glob('data/STM3k/test30/*/*.pkl')
+    for f in files:
+        pickle_unpack(f)
+    clips = [4, 5, 8, 12, 17, 27, 28, 29]
+    for i, c in enumerate(clips):
+        for f in range(1, 10):
+            print(f'\rclip: {c:02d}({i}/{len(clips)}), frame: {f}0', end='')
             compare(
                 path_interpreter={
                     **GT, **LQ,
@@ -162,5 +154,5 @@ if __name__ == '__main__':
                     ]),
                 },
                 clip_id=c, frame_id=f*10,
-                features=[(100, 620, 200, 720), (500, 300, 600, 400), (900, 250, 1000, 350)]
+                features=[(180, 0, 280, 100), (100, 620, 200, 720), (500, 300, 600, 400), (900, 250, 1000, 350)]
             )

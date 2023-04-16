@@ -138,6 +138,7 @@ log/
 out/
 out2/
 backups/
+pack/
 
 # out put files in meta
 meta/*.json

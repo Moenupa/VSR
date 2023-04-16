@@ -1,7 +1,5 @@
 exp_name = 'ganbasicvsr_spynet_c64b20_1x30x8_lr5e-5_30k_stm3k'
 
-scale = 4
-
 # model settings
 model = dict(
     type='GANBasicVSR',
@@ -18,11 +16,21 @@ model = dict(
                 num_blocks=23,
                 growth_channels=32,
                 upscale_factor=4),
-            discriminator=dict(type='ModifiedVGG', in_channels=3, mid_channels=64),
-            pixel_loss=dict(type='L1Loss', loss_weight=1e-2, reduction='mean'),
+            discriminator=dict(
+                type='UNetDiscriminatorWithSpectralNorm',
+                in_channels=3,
+                mid_channels=64,
+                skip_connection=True),
+            pixel_loss=dict(type='L1Loss', loss_weight=1.0, reduction='mean'),
             perceptual_loss=dict(
                 type='PerceptualLoss',
-                layer_weights={'34': 1.0},
+                layer_weights={
+                    '2': 0.1,
+                    '7': 0.1,
+                    '16': 1.0,
+                    '25': 1.0,
+                    '34': 1.0,
+                },
                 vgg_type='vgg19',
                 perceptual_weight=1.0,
                 style_weight=0,
@@ -30,11 +38,15 @@ model = dict(
             gan_loss=dict(
                 type='GANLoss',
                 gan_type='vanilla',
-                loss_weight=5e-3,
+                loss_weight=1e-1,
                 real_label_val=1.0,
                 fake_label_val=0),
+            is_use_sharpened_gt_in_pixel=True,
+            is_use_sharpened_gt_in_percep=True,
+            is_use_sharpened_gt_in_gan=False,
+            is_use_ema=True,
         ),
-        srgan_checkpoint='work_dirs/esrgan_x4c64b23g32_g1_100k_stm3k/iter_40000.pth',
+        srgan_checkpoint='https://download.openmmlab.com/mmediting/restorers/real_esrgan/realesrgan_c64b23g32_12x4_lr1e-4_400k_df2k_ost_20211010-34798885.pth',
         spynet_pretrained='https://download.openmmlab.com/mmediting/restorers/basicvsr/spynet_20210409-c6c1bd09.pth',
     ),
     discriminator=dict(
@@ -178,7 +190,7 @@ optimizers = dict(
     discriminator=dict(type='Adam', lr=1e-4, betas=(0.9, 0.99)))
 
 # learning policy
-total_iters = 40000
+total_iters = 60000
 lr_config = dict(policy='Step', by_epoch=False, step=[300], gamma=1)
 
 checkpoint_config = dict(interval=5000, save_optimizer=True, by_epoch=False)
@@ -197,7 +209,7 @@ visual_config = None
 custom_hooks = [
     dict(
         type='ExponentialMovingAverageHook',
-        module_keys=('generator_ema', ),
+        module_keys=('generator_ema',),
         interval=1,
         interp_cfg=dict(momentum=0.999),
     )
